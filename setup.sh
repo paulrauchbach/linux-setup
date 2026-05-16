@@ -55,7 +55,6 @@ run_script() {
   log_success "$script_name complete"
 }
 
-run_script "$LINUX_SETUP_INSTALL_DIR/install/zsh.sh"
 run_script "$LINUX_SETUP_INSTALL_DIR/install/oh-my-zsh.sh"
 run_script "$LINUX_SETUP_INSTALL_DIR/install/terminal.sh"
 

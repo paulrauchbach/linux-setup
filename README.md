@@ -19,8 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/inst
 
 ## What It Installs
 
-- zsh
-- oh-my-zsh with custom theme and plugins
+- oh-my-zsh with custom theme and plugins, when zsh is already installed
 - tmux config
 - common CLI tools
 - Docker

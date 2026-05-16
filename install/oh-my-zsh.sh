@@ -9,12 +9,17 @@ ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 ZSHRC="$HOME/.zshrc"
 
+if ! command -v zsh >/dev/null 2>&1; then
+  log_warn "zsh is not installed; skipping oh-my-zsh setup."
+  return 0 2>/dev/null || exit 0
+fi
+
 # --- Install or update oh-my-zsh ---
 if [ -d "$HOME/.oh-my-zsh" ]; then
   run_quiet "Updating oh-my-zsh" zsh "$ZSH/tools/upgrade.sh" -v silent
 else
   # RUNZSH=no: do not start zsh immediately after install
-  # CHSH=no: do not change the default shell (install/zsh.sh handles this)
+  # CHSH=no: do not change the default shell
   run_quiet "Installing oh-my-zsh" bash -c 'RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 fi
 
