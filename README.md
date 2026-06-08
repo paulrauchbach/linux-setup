@@ -69,8 +69,9 @@ Pass multiple extras as a comma-separated list. Interactive runs show a Gum
 checklist where zero or more extras can be selected.
 
 With config enabled, the installer also installs and configures zsh, oh-my-zsh,
-the bundled theme, tmux, and the supplied git identity. With config disabled,
-no dotfile is modified.
+the bundled theme, tmux, and the supplied git identity. It sets zsh as the
+default login shell and loads Oh My Zsh from `.zshrc`. With config disabled, no
+dotfile or login-shell setting is modified.
 
 The `desktop` tier is reserved for a later slice and currently exits with a
 clear "not yet available" message.

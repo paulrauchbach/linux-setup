@@ -201,7 +201,7 @@ Config applied: $config_enabled"
 
 	if [ "$config_enabled" = "yes" ]; then
 		recap="$recap
-Next step: restart your shell to load the zsh configuration."
+Shell: run 'exec zsh' now; new login sessions use zsh by default."
 	fi
 
 	if has_extra "$extras" docker; then

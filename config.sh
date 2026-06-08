@@ -77,6 +77,29 @@ apply_tmux_config() {
 	run_quiet "Installing tmux config" cp "$source_conf" "$target_conf"
 }
 
+set_default_shell_to_zsh() {
+	local current_shell
+	local user_name
+	local zsh_path
+
+	command -v chsh >/dev/null 2>&1 || {
+		log_warn "chsh is unavailable; zsh was not set as the default shell."
+		return 0
+	}
+
+	user_name="$(id -un)"
+	zsh_path="$(readlink -f "$(command -v zsh)")"
+	current_shell="$(getent passwd "$user_name" | cut -d: -f7)"
+
+	if [ -n "$current_shell" ] &&
+		[ "$(readlink -f "$current_shell")" = "$zsh_path" ]; then
+		return 0
+	fi
+
+	require_sudo
+	run_quiet "Setting zsh as the default shell" sudo chsh -s "$zsh_path" "$user_name"
+}
+
 apply_zsh_config() {
 	local zsh_root="${ZSH:-$HOME/.oh-my-zsh}"
 	local zsh_custom="${ZSH_CUSTOM:-$zsh_root/custom}"
@@ -91,6 +114,8 @@ apply_zsh_config() {
 		log_warn "zsh is unavailable; skipping shell config."
 		return 0
 	fi
+
+	set_default_shell_to_zsh
 
 	install_or_update_git_repo \
 		"oh-my-zsh" \
@@ -143,7 +168,7 @@ fi
 # <<< linux-setup managed <<<
 EOF
 
-	log_info "Restart your shell or run: exec zsh"
+	log_info "Run 'exec zsh' now; new login sessions will use zsh by default."
 }
 
 apply_personal_config() {
