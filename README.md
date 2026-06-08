@@ -26,6 +26,13 @@ curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/inst
   --email "you@example.com"
 ```
 
+Install the additive dev tier with Docker and the Node CLI bundle:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | \
+  bash -s -- dev --with docker,node-clis --no-config
+```
+
 The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the repository
 to `~/.local/share/linux-setup`, and forwards every argument to `setup.sh`.
 
@@ -39,12 +46,32 @@ The essentials tier installs:
 
 GitHub CLI is installed from its signed apt repository.
 
+## Dev
+
+The dev tier includes everything in essentials and adds:
+
+- mise from its signed apt repository
+- global `python@latest` and `node@lts` runtimes
+- pipx and lazygit
+
+## Extras
+
+Extras are independent of the selected tier:
+
+- `docker`: Docker Engine, Compose and Buildx plugins, plus lazydocker
+- `ollama`: Ollama's official Linux installer
+- `claude`: Claude Code's native installer
+- `node-clis`: pnpm, Codex CLI, and Gemini CLI through mise-managed Node.js
+
+Pass multiple extras as a comma-separated list. Interactive runs show a Gum
+checklist where zero or more extras can be selected.
+
 With config enabled, the installer also installs and configures zsh, oh-my-zsh,
 the bundled theme, tmux, and the supplied git identity. With config disabled,
 no dotfile is modified.
 
-The `dev`, `desktop`, and extras choices are reserved for later slices and
-currently exit with a clear "not yet available" message.
+The `desktop` tier is reserved for a later slice and currently exits with a
+clear "not yet available" message.
 
 ## Configuration
 
@@ -53,6 +80,7 @@ an interactive Gum prompt:
 
 ```bash
 LINUX_SETUP_TIER=essentials \
+LINUX_SETUP_EXTRAS=docker,ollama \
 LINUX_SETUP_CONFIG=yes \
 LINUX_SETUP_FULL_NAME="Your Name" \
 LINUX_SETUP_EMAIL="you@example.com" \

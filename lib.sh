@@ -19,6 +19,7 @@ else
 fi
 
 LINUX_SETUP_OS_ID="unknown"
+LINUX_SETUP_OS_CODENAME=""
 APT_METADATA_UPDATED=0
 SUDO_KEEPALIVE_PID=""
 
@@ -74,6 +75,8 @@ run_quiet() {
 
 detect_platform() {
 	local ID=""
+	local VERSION_CODENAME=""
+	local UBUNTU_CODENAME=""
 
 	if [ -r /etc/os-release ]; then
 		# shellcheck disable=SC1091
@@ -81,6 +84,8 @@ detect_platform() {
 	fi
 
 	LINUX_SETUP_OS_ID="${ID:-unknown}"
+	LINUX_SETUP_OS_CODENAME="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
+	export LINUX_SETUP_OS_ID LINUX_SETUP_OS_CODENAME
 }
 
 is_supported_platform() {
@@ -199,6 +204,13 @@ run_remote_script() {
 
 ui_choose_tier() {
 	gum choose --header "Choose an install tier" essentials dev desktop </dev/tty
+}
+
+ui_choose_extras() {
+	gum choose \
+		--no-limit \
+		--header "Choose optional extras (space to select)" \
+		docker ollama claude node-clis </dev/tty
 }
 
 ui_confirm_config() {

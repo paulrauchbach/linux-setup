@@ -43,7 +43,6 @@ configured_omz_plugins() {
 		"zoxide:zoxide"
 		"tmux:tmux"
 		"docker:docker"
-		"python3:python"
 		"mise:mise"
 	)
 
@@ -53,6 +52,10 @@ configured_omz_plugins() {
 			plugins+=("${plugin#*:}")
 		fi
 	done
+
+	if command -v mise >/dev/null 2>&1 && mise which python >/dev/null 2>&1; then
+		plugins+=(python)
+	fi
 
 	plugins+=(zsh-autosuggestions zsh-syntax-highlighting)
 	printf '%s ' "${plugins[@]}"

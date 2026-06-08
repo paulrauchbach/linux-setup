@@ -29,6 +29,10 @@ ESSENTIAL_PACKAGES=(
 	zoxide
 )
 
+DEV_PACKAGES=(
+	pipx
+)
+
 usage() {
 	cat <<'EOF'
 Usage: setup.sh [essentials|dev|desktop] [options]
@@ -38,7 +42,8 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Reserved for a later slice
+  --with EXTRAS         Comma-separated: docker,ollama,claude,node-clis
+                        Use --with none to explicitly select no extras
   -h, --help            Show this help
 
 Environment:
@@ -66,16 +71,80 @@ normalize_bool() {
 
 validate_tier() {
 	case "$1" in
-		essentials)
+		essentials | dev)
 			return 0
 			;;
-		dev | desktop)
-			die "Tier '$1' is not yet available. This slice supports essentials only."
+		desktop)
+			die "Tier 'desktop' is not yet available."
 			;;
 		*)
 			die "Unknown tier '$1'. Choose essentials, dev, or desktop."
 			;;
 	esac
+}
+
+normalize_extras() {
+	local normalized=""
+	local extra
+	local saw_none=0
+
+	while IFS= read -r extra; do
+		extra="${extra#"${extra%%[![:space:]]*}"}"
+		extra="${extra%"${extra##*[![:space:]]}"}"
+		[ -n "$extra" ] || continue
+
+		case "$extra" in
+			none)
+				[ -z "$normalized" ] || die "'none' cannot be combined with other extras."
+				saw_none=1
+				continue
+				;;
+			docker | ollama | claude | node-clis)
+				[ "$saw_none" -eq 0 ] || die "'none' cannot be combined with other extras."
+				;;
+			*)
+				die "Unknown extra '$extra'. Choose docker, ollama, claude, or node-clis."
+				;;
+		esac
+
+		case ",$normalized," in
+			*",$extra,"*)
+				continue
+				;;
+		esac
+
+		if [ -n "$normalized" ]; then
+			normalized="$normalized,$extra"
+		else
+			normalized="$extra"
+		fi
+	done < <(printf '%s\n' "$1" | tr ',' '\n')
+
+	printf '%s\n' "$normalized"
+}
+
+has_extra() {
+	local extras="$1"
+	local expected="$2"
+
+	case ",$extras," in
+		*",$expected,"*)
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+format_extras() {
+	local extras="$1"
+
+	if [ -z "$extras" ]; then
+		printf 'none\n'
+	else
+		printf '%s\n' "${extras//,/, }"
+	fi
 }
 
 prompt_nonempty() {
@@ -93,12 +162,16 @@ prompt_nonempty() {
 show_preflight() {
 	local tier="$1"
 	local config_enabled="$2"
-	local full_name="$3"
-	local email="$4"
+	local extras="$3"
+	local full_name="$4"
+	local email="$5"
 	local summary
+	local extras_display
+
+	extras_display="$(format_extras "$extras")"
 
 	summary="Tier: $tier
-Extras: none
+Extras: $extras_display
 Config: $config_enabled"
 
 	if [ "$config_enabled" = "yes" ]; then
@@ -116,14 +189,37 @@ Git email: $email"
 }
 
 show_recap() {
-	local config_enabled="$1"
-	local recap="Installed: essentials
-Extras: none
+	local tier="$1"
+	local extras="$2"
+	local config_enabled="$3"
+	local extras_display
+	local recap
+
+	extras_display="$(format_extras "$extras")"
+	recap="Installed tier: $tier
+Extras: $extras_display
 Config applied: $config_enabled"
 
 	if [ "$config_enabled" = "yes" ]; then
 		recap="$recap
 Next step: restart your shell to load the zsh configuration."
+	fi
+
+	if has_extra "$extras" docker; then
+		recap="$recap
+Docker: log out and back in for group membership to take effect."
+	fi
+
+	if [ "$config_enabled" = "no" ] &&
+		{ has_extra "$extras" claude || has_extra "$extras" docker; }; then
+		recap="$recap
+PATH: ensure \$HOME/.local/bin is available in your shell."
+	fi
+
+	if [ "$config_enabled" = "no" ] &&
+		{ [ "$tier" = "dev" ] || has_extra "$extras" node-clis; }; then
+		recap="$recap
+mise: activate mise in your shell to use managed runtimes and Node CLIs."
 	fi
 
 	if has_interactive_tty && command -v gum >/dev/null 2>&1; then
@@ -140,6 +236,7 @@ main() {
 	local full_name_arg=""
 	local email_arg=""
 	local extras_arg=""
+	local extras_arg_set=0
 	local positional_seen=0
 
 	while [ "$#" -gt 0 ]; do
@@ -181,10 +278,12 @@ main() {
 			--with)
 				[ "$#" -ge 2 ] || die "--with requires a comma-separated value."
 				extras_arg="$2"
+				extras_arg_set=1
 				shift 2
 				;;
 			--with=*)
 				extras_arg="${1#*=}"
+				extras_arg_set=1
 				shift
 				;;
 			-h | --help)
@@ -212,14 +311,23 @@ main() {
 	local config_value="${config_arg:-${LINUX_SETUP_CONFIG:-}}"
 	local full_name="${full_name_arg:-${LINUX_SETUP_FULL_NAME:-}}"
 	local email="${email_arg:-${LINUX_SETUP_EMAIL:-}}"
-	local extras="${extras_arg:-${LINUX_SETUP_EXTRAS:-}}"
+	local extras=""
+	local extras_set=0
 
 	if [ -n "$tier" ]; then
 		validate_tier "$tier"
 	fi
 
-	if [ -n "$extras" ]; then
-		die "Extras are not yet available: $extras"
+	if [ "$extras_arg_set" -eq 1 ]; then
+		extras="$extras_arg"
+		extras_set=1
+	elif [ "${LINUX_SETUP_EXTRAS+x}" = "x" ]; then
+		extras="$LINUX_SETUP_EXTRAS"
+		extras_set=1
+	fi
+
+	if [ "$extras_set" -eq 1 ]; then
+		extras="$(normalize_extras "$extras")"
 	fi
 
 	if [ -n "$config_value" ]; then
@@ -237,6 +345,12 @@ main() {
 			die "Tier is required for a non-interactive run. Pass essentials or set LINUX_SETUP_TIER."
 		tier="$(ui_choose_tier)" || die "Tier selection cancelled."
 		validate_tier "$tier"
+	fi
+
+	if [ "$extras_set" -eq 0 ] && has_interactive_tty; then
+		local extras_selection
+		extras_selection="$(ui_choose_extras)" || die "Extras selection cancelled."
+		extras="$(normalize_extras "$extras_selection")"
 	fi
 
 	if [ -z "$config_value" ]; then
@@ -259,7 +373,7 @@ main() {
 		fi
 	fi
 
-	show_preflight "$tier" "$config_value" "$full_name" "$email"
+	show_preflight "$tier" "$config_value" "$extras" "$full_name" "$email"
 
 	if has_interactive_tty && ! ui_confirm_run; then
 		log_warn "Setup cancelled."
@@ -276,12 +390,24 @@ main() {
 	apt_install "${ESSENTIAL_PACKAGES[@]}"
 	install_github_cli
 
+	if [ "$tier" = "dev" ]; then
+		log_title "Installing dev tools"
+		install_mise_defaults
+		apt_install "${DEV_PACKAGES[@]}"
+		install_lazygit
+	fi
+
+	if [ -n "$extras" ]; then
+		log_title "Installing extras"
+		install_extras "$extras"
+	fi
+
 	if [ "$config_value" = "yes" ]; then
 		log_title "Applying personal config"
 		apply_personal_config "$full_name" "$email"
 	fi
 
-	show_recap "$config_value"
+	show_recap "$tier" "$extras" "$config_value"
 }
 
 main "$@"
