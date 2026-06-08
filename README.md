@@ -1,45 +1,190 @@
 # Linux Setup
 
-Bare-bones CLI setup for Debian-based Linux systems.
+A tiered Debian/Ubuntu installer for CLI tools with optional personal config.
 
 ## Install
+
+Interactive:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | bash
 ```
 
-The installer clones this repository to `~/.local/share/linux-setup` and runs the setup from there.
-
-For a non-interactive install:
+Install the essentials tier without touching dotfiles:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | \
-  CONFIG_FULL_NAME="Your Name" CONFIG_EMAIL="you@example.com" bash
+  bash -s -- essentials --no-config
 ```
 
-## What It Installs
+Install essentials and apply personal config:
 
-- oh-my-zsh with custom theme and plugins, when zsh is already installed
-- tmux config
-- common CLI tools
-- Docker
-- GitHub CLI
-- mise with Python and Node
-- lazydocker
-- Ollama
-- Claude Code
-- global Node CLI tools
+```bash
+curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | \
+  bash -s -- essentials --config \
+  --name "Your Name" \
+  --email "you@example.com"
+```
+
+The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the repository
+to `~/.local/share/linux-setup`, and forwards every argument to `setup.sh`.
+
+## Essentials
+
+The essentials tier installs:
+
+- git, GitHub CLI, curl, wget, and unzip
+- ripgrep, fd-find, fzf, bat, eza, and zoxide
+- btop, tmux, plocate, and fastfetch
+
+GitHub CLI is installed from its signed apt repository.
+
+With config enabled, the installer also installs and configures zsh, oh-my-zsh,
+the bundled theme, tmux, and the supplied git identity. With config disabled,
+no dotfile is modified.
+
+The `dev`, `desktop`, and extras choices are reserved for later slices and
+currently exit with a clear "not yet available" message.
+
+## Configuration
+
+Each choice uses command-line arguments first, then environment variables, then
+an interactive Gum prompt:
+
+```bash
+LINUX_SETUP_TIER=essentials \
+LINUX_SETUP_CONFIG=yes \
+LINUX_SETUP_FULL_NAME="Your Name" \
+LINUX_SETUP_EMAIL="you@example.com" \
+bash setup.sh
+```
+
+Use `bash setup.sh --help` for all supported flags.
 
 ## Local Development
 
-Run the local checkout directly:
+Run setup from the current checkout:
 
 ```bash
-LINUX_SETUP_REPO_URL="$(pwd)" bash install.sh
+bash setup.sh essentials --no-config
 ```
 
-Or run setup from the current checkout:
+### Test in a VM with Quickemu
+
+Install the required tools and create a directory for test VMs:
 
 ```bash
+sudo apt install quickemu qemu-utils cloud-image-utils
+mkdir -p ~/VMs/linux-setup-tests
+cd ~/VMs/linux-setup-tests
+```
+
+#### Ubuntu Minimal
+
+Ubuntu provides a small, preinstalled cloud image instead of a minimal installer ISO. Download the Ubuntu 24.04 LTS minimal image and expand its virtual disk to 64 GB:
+
+```bash
+mkdir -p ubuntu-test
+curl -fL \
+  -o ubuntu-test/disk.qcow2 \
+  https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img
+qemu-img resize ubuntu-test/disk.qcow2 64G
+```
+
+Cloud images use cloud-init for initial user setup. Create a test user:
+
+```bash
+cat > ubuntu-test/user-data <<'EOF'
+#cloud-config
+users:
+  - name: ubuntu
+    groups: [adm, sudo]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+chpasswd:
+  expire: false
+  users:
+    - name: ubuntu
+      password: ubuntu
+      type: text
+ssh_pwauth: true
+EOF
+```
+
+Create the cloud-init seed and `ubuntu-test.conf`:
+
+```bash
+printf 'instance-id: ubuntu-test\nlocal-hostname: ubuntu-test\n' > ubuntu-test/meta-data
+cloud-localds ubuntu-test/seed.iso ubuntu-test/user-data ubuntu-test/meta-data
+
+cat > ubuntu-test.conf <<'EOF'
+#!/usr/bin/quickemu --vm
+guest_os="linux"
+disk_img="ubuntu-test/disk.qcow2"
+iso="ubuntu-test/seed.iso"
+EOF
+```
+
+Start the VM and log in with username `ubuntu` and password `ubuntu`:
+
+```bash
+quickemu --vm ubuntu-test.conf
+```
+
+The root filesystem should automatically expand to the 64 GB virtual disk during the first boot.
+
+#### Debian Netinst
+
+Download the official amd64 **netinst** image from [debian.org](https://www.debian.org/CD/netinst/) and save it as `debian-test/debian-netinst.iso`. Netinst contains only the installer and a basic package set; remaining packages are downloaded during installation.
+
+Create a 64 GB virtual disk:
+
+```bash
+mkdir -p debian-test
+mv ~/Downloads/debian-*-amd64-netinst.iso debian-test/debian-netinst.iso
+qemu-img create -f qcow2 debian-test/disk.qcow2 64G
+```
+
+Create `debian-test.conf`:
+
+```bash
+cat > debian-test.conf <<'EOF'
+#!/usr/bin/quickemu --vm
+guest_os="linux"
+disk_img="debian-test/disk.qcow2"
+iso="debian-test/debian-netinst.iso"
+EOF
+```
+
+Start the VM and install Debian:
+
+```bash
+quickemu --vm debian-test.conf
+```
+
+#### Test the Setup
+
+After the first boot or installation, shut down the guest and create a clean snapshot:
+
+```bash
+VM=ubuntu-test.conf # or debian-test.conf
+quickemu --vm "$VM" --snapshot create clean-install
+```
+
+Clone the repository inside the VM and run the installer:
+
+```bash
+sudo apt update && sudo apt install -y git
+git clone https://github.com/paulrauchbach/linux-setup.git
+cd linux-setup
 LINUX_SETUP_INSTALL_DIR="$(pwd)" bash setup.sh
+```
+
+To repeat the test from a clean system, shut down the VM and restore the snapshot:
+
+```bash
+VM=ubuntu-test.conf # or debian-test.conf
+quickemu --vm "$VM" --snapshot apply clean-install
+quickemu --vm "$VM"
 ```
