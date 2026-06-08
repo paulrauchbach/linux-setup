@@ -17,7 +17,6 @@ ESSENTIAL_PACKAGES=(
 	btop
 	curl
 	eza
-	fastfetch
 	fd-find
 	fzf
 	git
@@ -388,6 +387,7 @@ main() {
 
 	log_title "Installing essentials"
 	apt_install "${ESSENTIAL_PACKAGES[@]}"
+	install_fastfetch
 	install_github_cli
 
 	if [ "$tier" = "dev" ]; then

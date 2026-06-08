@@ -44,6 +44,46 @@ install_github_cli() {
 	apt_install gh
 }
 
+install_fastfetch() {
+	local architecture
+	local package_file
+	local package_url
+
+	if command -v fastfetch >/dev/null 2>&1; then
+		return 0
+	fi
+
+	is_supported_platform || {
+		log_warn "Skipping Fastfetch on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	if apt-cache show fastfetch >/dev/null 2>&1; then
+		apt_install fastfetch
+		return 0
+	fi
+
+	architecture="$(dpkg --print-architecture)"
+	case "$architecture" in
+		amd64)
+			architecture="amd64"
+			;;
+		arm64)
+			architecture="aarch64"
+			;;
+		*)
+			die "Unsupported architecture for Fastfetch: $architecture"
+			;;
+	esac
+
+	package_file="$(mktemp --suffix=.deb)"
+	package_url="https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${architecture}.deb"
+
+	run_quiet "Downloading Fastfetch" curl -fsSL "$package_url" -o "$package_file"
+	run_quiet "Installing Fastfetch" sudo apt-get install -y -qq "$package_file"
+	rm -f "$package_file"
+}
+
 install_mise() {
 	if [ "$MISE_PREPARED" -eq 1 ]; then
 		return 0

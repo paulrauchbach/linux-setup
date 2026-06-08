@@ -44,7 +44,9 @@ The essentials tier installs:
 - ripgrep, fd-find, fzf, bat, eza, and zoxide
 - btop, tmux, plocate, and fastfetch
 
-GitHub CLI is installed from its signed apt repository.
+GitHub CLI is installed from its signed apt repository. Fastfetch uses the
+distro package when available and otherwise installs the official release
+package, including on Ubuntu 24.04.
 
 ## Dev
 
