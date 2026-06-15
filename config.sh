@@ -171,6 +171,68 @@ EOF
 	log_info "Run 'exec zsh' now; new login sessions will use zsh by default."
 }
 
+apply_alacritty_config() {
+	local source_conf="$LINUX_SETUP_INSTALL_DIR/configs/alacritty.toml"
+	local target_dir="$HOME/.config/alacritty"
+
+	command -v alacritty >/dev/null 2>&1 || return 0
+	[ -f "$source_conf" ] || die "Alacritty config not found at $source_conf."
+
+	mkdir -p "$target_dir"
+	run_quiet "Installing Alacritty config" cp "$source_conf" "$target_dir/alacritty.toml"
+}
+
+apply_vscode_config() {
+	local source_settings="$LINUX_SETUP_INSTALL_DIR/configs/vscode-settings.json"
+	local extensions_file="$LINUX_SETUP_INSTALL_DIR/configs/vscode-extensions.txt"
+	local target_dir="$HOME/.config/Code/User"
+	local extension
+
+	command -v code >/dev/null 2>&1 || return 0
+
+	if [ -f "$source_settings" ]; then
+		mkdir -p "$target_dir"
+		run_quiet "Installing VS Code settings" cp "$source_settings" "$target_dir/settings.json"
+	fi
+
+	if [ -f "$extensions_file" ]; then
+		while IFS= read -r extension; do
+			extension="${extension#"${extension%%[![:space:]]*}"}"
+			extension="${extension%"${extension##*[![:space:]]}"}"
+			[ -n "$extension" ] || continue
+			case "$extension" in
+				\#*) continue ;;
+			esac
+			run_quiet "Installing VS Code extension $extension" \
+				code --install-extension "$extension" --force
+		done <"$extensions_file"
+	fi
+}
+
+apply_brave_policy() {
+	local source_policy="$LINUX_SETUP_INSTALL_DIR/configs/brave-policy.json"
+	local target_policy="/etc/brave/policies/managed/linux-setup.json"
+	local user_name
+	local rendered
+
+	if ! command -v brave-browser >/dev/null 2>&1 &&
+		! command -v brave >/dev/null 2>&1 &&
+		! { command -v dpkg >/dev/null 2>&1 && dpkg -s brave-origin >/dev/null 2>&1; }; then
+		return 0
+	fi
+
+	[ -f "$source_policy" ] || die "Brave policy not found at $source_policy."
+
+	user_name="$(id -un)"
+	rendered="$(mktemp)"
+	sed "s|__USER_NAME__|$user_name|g" "$source_policy" >"$rendered"
+
+	require_sudo
+	run_quiet "Installing Brave managed policy" \
+		sudo install -D -m 0644 -o root -g root "$rendered" "$target_policy"
+	rm -f "$rendered"
+}
+
 apply_personal_config() {
 	local full_name="$1"
 	local email="$2"
@@ -178,4 +240,7 @@ apply_personal_config() {
 	apply_zsh_config
 	apply_tmux_config
 	apply_git_config "$full_name" "$email"
+	apply_alacritty_config
+	apply_vscode_config
+	apply_brave_policy
 }

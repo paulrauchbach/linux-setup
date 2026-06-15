@@ -1,0 +1,57 @@
+{
+  "RestoreOnStartup": 1,
+  "BackgroundModeEnabled": false,
+  "DefaultBrowserSettingEnabled": false,
+  "PasswordManagerEnabled": false,
+  "SyncDisabled": true,
+  "MetricsReportingEnabled": false,
+  "DisableScreenshots": true,
+  "HardwareAccelerationModeEnabled": true,
+  "TranslateEnabled": true,
+  "SpellcheckEnabled": true,
+  "SpellcheckLanguage": ["de"],
+  "PromptForDownloadLocation": true,
+  "DownloadDirectory": "/home/__USER_NAME__/Downloads",
+  "BookmarkBarEnabled": false,
+  "DefaultSearchProviderEnabled": true,
+  "DefaultSearchProviderName": "DuckDuckGo",
+  "DefaultSearchProviderKeyword": "ddg",
+  "DefaultSearchProviderSearchURL": "https://duckduckgo.com/?q={searchTerms}",
+  "DefaultSearchProviderSuggestURL": "https://duckduckgo.com/ac/?q={searchTerms}&type=list",
+  "ExtensionInstallForcelist": [
+    "cjpalhdlnbpafiamejdnhcphjbkeiagm;https://clients2.google.com/service/update2/crx"
+  ],
+  "ExtensionSettings": {
+    "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
+      "toolbar_pin": "force_pinned"
+    }
+  },
+  "SiteSearchSettings": [
+    {
+      "name": "Debian Packages",
+      "shortcut": "debian",
+      "url": "https://packages.debian.org/search?keywords={searchTerms}"
+    },
+    {
+      "name": "Perplexity AI Search",
+      "shortcut": "perplexity",
+      "url": "https://www.perplexity.ai/search?q={searchTerms}"
+    }
+  ],
+  "BraveAIChatEnabled": false,
+  "BraveNewsDisabled": true,
+  "BraveRewardsDisabled": true,
+  "BraveWalletDisabled": true,
+  "BraveVPNDisabled": true,
+  "BraveTalkDisabled": true,
+  "BravePlaylistEnabled": false,
+  "BraveWaybackMachineEnabled": false,
+  "BraveP3AEnabled": false,
+  "BraveStatsPingEnabled": false,
+  "BraveWebDiscoveryEnabled": false,
+  "TorDisabled": true,
+  "BraveGlobalPrivacyControlEnabled": true,
+  "DefaultBraveAdblockSetting": "aggressive",
+  "DefaultBraveFingerprintingV2Setting": "strict",
+  "DefaultBraveHttpsUpgradeSetting": "strict"
+}

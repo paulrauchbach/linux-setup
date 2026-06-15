@@ -71,14 +71,26 @@ Everything in essentials, plus:
 
 ### desktop
 
-Everything in dev, plus a **desktop GUI layer**.
+Everything in dev, plus a **desktop GUI layer**:
 
-> **TODO (#1):** The concrete desktop GUI application list is deliberately
-> deferred — see [issue #1](https://github.com/paulrauchbach/linux-setup/issues/1).
-> The tier is fully wired and runs end-to-end today; the `DESKTOP_PACKAGES`
-> list in `setup.sh` is an empty, clearly-marked placeholder that is trivial to
-> populate later. Running `setup.sh desktop` now installs essentials + dev and
-> reports that the GUI app list is not configured yet.
+- **Brave Origin** — the minimalist standalone Brave build, from Brave's signed
+  apt repository (`brave-origin`)
+- **VS Code**, **Signal**, and **Spotify** — each from its own signed apt
+  repository
+- **Thunderbird**, **VLC**, **KeePassXC**, and **Alacritty** — from the distro
+  apt repository
+- **JetBrainsMono Nerd Font** — fetched from the
+  [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) release and installed
+  into `~/.local/share/fonts`
+
+On Ubuntu the distro `thunderbird` package is a transitional shim that pulls the
+snap, so the desktop layer installs Thunderbird from Mozilla's signed apt
+repository (pinned above the Ubuntu archive) instead; Debian ships a genuine
+`.deb`, so plain apt is used there.
+
+**Brave Origin** is free on Linux but shows a one-time *Proceed with Origin for
+free* prompt on first launch — complete it manually. When `--config` is enabled,
+a managed browser policy is installed (see below).
 
 ## Extras
 
@@ -104,6 +116,31 @@ setting is modified.
 
 When config is enabled, a git `--name` and `--email` are required (prompted for
 interactively, or supplied via flags / environment variables).
+
+### Desktop config
+
+When the desktop apps are present, `--config` also applies (each step is skipped
+if its app is not installed):
+
+- **Alacritty** — installs `configs/alacritty.toml` to
+  `~/.config/alacritty/alacritty.toml` (JetBrainsMono Nerd Font, padding,
+  opacity).
+- **VS Code** — installs `configs/vscode-settings.json` to
+  `~/.config/Code/User/settings.json` and installs every extension listed in
+  `configs/vscode-extensions.txt` (edit that file to match your stack).
+- **Brave Origin** — renders `configs/brave-policy.json` (substituting your
+  username into the download directory) and installs it as a root-owned managed
+  policy at `/etc/brave/policies/managed/linux-setup.json`. It restores the last
+  session, disables sync/metrics/password-manager/News/Rewards/Wallet/VPN/Talk/Tor,
+  prompts for each download location, sets DuckDuckGo as default search,
+  force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
+  site-search shortcuts.
+
+After installing Brave Origin, restart it and verify the policy at
+`brave://policy`. The Brave-specific keys are best-effort and should be checked
+there in a clean VM — adjust any that the build flags as unrecognized. Chromium
+has no equivalent of Firefox's `SearchEngines.Remove`, so bundled search
+providers are not removed.
 
 ## CLI reference
 
