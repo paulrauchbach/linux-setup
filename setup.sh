@@ -32,6 +32,12 @@ DEV_PACKAGES=(
 	pipx
 )
 
+# TODO(#1): The concrete desktop GUI application list is deliberately deferred.
+# The desktop tier is fully wired as the top additive layer (essentials + dev +
+# desktop); only this package set stays empty until the app list is decided.
+# See https://github.com/paulrauchbach/linux-setup/issues/1.
+DESKTOP_PACKAGES=()
+
 usage() {
 	cat <<'EOF'
 Usage: setup.sh [essentials|dev|desktop] [options]
@@ -70,11 +76,8 @@ normalize_bool() {
 
 validate_tier() {
 	case "$1" in
-		essentials | dev)
+		essentials | dev | desktop)
 			return 0
-			;;
-		desktop)
-			die "Tier 'desktop' is not yet available."
 			;;
 		*)
 			die "Unknown tier '$1'. Choose essentials, dev, or desktop."
@@ -216,7 +219,7 @@ PATH: ensure \$HOME/.local/bin is available in your shell."
 	fi
 
 	if [ "$config_enabled" = "no" ] &&
-		{ [ "$tier" = "dev" ] || has_extra "$extras" node-clis; }; then
+		{ [ "$tier" = "dev" ] || [ "$tier" = "desktop" ] || has_extra "$extras" node-clis; }; then
 		recap="$recap
 mise: activate mise in your shell to use managed runtimes and Node CLIs."
 	fi
@@ -390,11 +393,16 @@ main() {
 	install_fastfetch
 	install_github_cli
 
-	if [ "$tier" = "dev" ]; then
+	if [ "$tier" = "dev" ] || [ "$tier" = "desktop" ]; then
 		log_title "Installing dev tools"
 		install_mise_defaults
 		apt_install "${DEV_PACKAGES[@]}"
 		install_lazygit
+	fi
+
+	if [ "$tier" = "desktop" ]; then
+		log_title "Installing desktop layer"
+		install_desktop "${DESKTOP_PACKAGES[@]+"${DESKTOP_PACKAGES[@]}"}"
 	fi
 
 	if [ -n "$extras" ]; then

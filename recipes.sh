@@ -231,6 +231,19 @@ install_node_clis() {
 	done
 }
 
+install_desktop() {
+	# TODO(#1): Populate the desktop layer with the concrete GUI application
+	# list. The tier is wired as the top additive layer (essentials + dev +
+	# desktop); only the GUI package set is deferred until the apps are decided.
+	# See https://github.com/paulrauchbach/linux-setup/issues/1.
+	if [ "$#" -eq 0 ]; then
+		log_info "Desktop GUI apps are deferred (TODO #1); nothing to install yet."
+		return 0
+	fi
+
+	apt_install "$@"
+}
+
 install_extras() {
 	local extras="$1"
 	local selected=()

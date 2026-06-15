@@ -1,16 +1,24 @@
 # Linux Setup
 
 A tiered Debian/Ubuntu installer for CLI tools with optional personal config.
+Pick a tier, optionally add a few extras, optionally apply the bundled shell,
+tmux, and git configuration — interactively with [Gum](https://github.com/charmbracelet/gum)
+or fully non-interactively for piped one-liners and automation.
 
 ## Install
 
-Interactive:
+Run the bootstrap with no arguments for an interactive run:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | bash
 ```
 
-Install the essentials tier without touching dotfiles:
+The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the
+repository to `~/.local/share/linux-setup`, and forwards every argument to
+`setup.sh`. Re-running it updates the existing checkout in place.
+
+Pass arguments after `--` to run non-interactively. Install the essentials tier
+without touching dotfiles:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | \
@@ -33,12 +41,17 @@ curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/inst
   bash -s -- dev --with docker,node-clis --no-config
 ```
 
-The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the repository
-to `~/.local/share/linux-setup`, and forwards every argument to `setup.sh`.
+## Tiers
 
-## Essentials
+Tiers are **additive layers** — each higher tier includes everything below it:
 
-The essentials tier installs:
+| Tier         | Includes                                  |
+| ------------ | ----------------------------------------- |
+| `essentials` | base CLI tools                            |
+| `dev`        | essentials + developer tooling            |
+| `desktop`    | essentials + dev + desktop GUI layer      |
+
+### essentials
 
 - git, GitHub CLI, curl, wget, and unzip
 - ripgrep, fd-find, fzf, bat, eza, and zoxide
@@ -48,38 +61,79 @@ GitHub CLI is installed from its signed apt repository. Fastfetch uses the
 distro package when available and otherwise installs the official release
 package, including on Ubuntu 24.04.
 
-## Dev
+### dev
 
-The dev tier includes everything in essentials and adds:
+Everything in essentials, plus:
 
 - mise from its signed apt repository
 - global `python@latest` and `node@lts` runtimes
 - pipx and lazygit
 
+### desktop
+
+Everything in dev, plus a **desktop GUI layer**.
+
+> **TODO (#1):** The concrete desktop GUI application list is deliberately
+> deferred — see [issue #1](https://github.com/paulrauchbach/linux-setup/issues/1).
+> The tier is fully wired and runs end-to-end today; the `DESKTOP_PACKAGES`
+> list in `setup.sh` is an empty, clearly-marked placeholder that is trivial to
+> populate later. Running `setup.sh desktop` now installs essentials + dev and
+> reports that the GUI app list is not configured yet.
+
 ## Extras
 
-Extras are independent of the selected tier:
+Extras are independent of the selected tier and are chosen with `--with`:
 
 - `docker`: Docker Engine, Compose and Buildx plugins, plus lazydocker
 - `ollama`: Ollama's official Linux installer
 - `claude`: Claude Code's native installer
 - `node-clis`: pnpm, Codex CLI, and Gemini CLI through mise-managed Node.js
 
-Pass multiple extras as a comma-separated list. Interactive runs show a Gum
-checklist where zero or more extras can be selected.
+Pass multiple extras as a comma-separated list, e.g. `--with docker,ollama`. Use
+`--with none` to explicitly select no extras in a non-interactive run.
+Interactive runs show a Gum checklist where zero or more extras can be selected.
 
-With config enabled, the installer also installs and configures zsh, oh-my-zsh,
-the bundled theme, tmux, and the supplied git identity. It sets zsh as the
-default login shell and loads Oh My Zsh from `.zshrc`. With config disabled, no
-dotfile or login-shell setting is modified.
+## Personal config
 
-The `desktop` tier is reserved for a later slice and currently exits with a
-clear "not yet available" message.
+With `--config`, the installer also installs and configures zsh, oh-my-zsh, the
+bundled theme, tmux, and the supplied git identity. It sets zsh as the default
+login shell and loads Oh My Zsh from `.zshrc` (managing a clearly-delimited
+block that exports `~/.local/bin` on `PATH`, activates mise, and auto-starts
+tmux for interactive sessions). With `--no-config`, no dotfile or login-shell
+setting is modified.
 
-## Configuration
+When config is enabled, a git `--name` and `--email` are required (prompted for
+interactively, or supplied via flags / environment variables).
 
-Each choice uses command-line arguments first, then environment variables, then
-an interactive Gum prompt:
+## CLI reference
+
+```
+Usage: setup.sh [essentials|dev|desktop] [options]
+
+Options:
+  --config              Apply personal shell, tmux, and git config
+  --no-config           Install tools without touching dotfiles
+  --name NAME           Git user.name (used with --config)
+  --email EMAIL         Git user.email (used with --config)
+  --with EXTRAS         Comma-separated: docker,ollama,claude,node-clis
+                        Use --with none to explicitly select no extras
+  -h, --help            Show this help
+```
+
+## Configuration precedence
+
+Each choice is resolved from **command-line arguments first, then environment
+variables, then an interactive Gum prompt**:
+
+| Setting        | Flag                  | Environment variable     |
+| -------------- | --------------------- | ------------------------ |
+| Tier           | positional argument   | `LINUX_SETUP_TIER`       |
+| Extras         | `--with`              | `LINUX_SETUP_EXTRAS`     |
+| Config on/off  | `--config`/`--no-config` | `LINUX_SETUP_CONFIG`  |
+| Git name       | `--name`              | `LINUX_SETUP_FULL_NAME`  |
+| Git email      | `--email`             | `LINUX_SETUP_EMAIL`      |
+
+`LINUX_SETUP_CONFIG` accepts `yes/no`, `true/false`, or `1/0`.
 
 ```bash
 LINUX_SETUP_TIER=essentials \
@@ -90,120 +144,103 @@ LINUX_SETUP_EMAIL="you@example.com" \
 bash setup.sh
 ```
 
-Use `bash setup.sh --help` for all supported flags.
+The bootstrap (`install.sh`) additionally honors `LINUX_SETUP_REPO_URL`,
+`LINUX_SETUP_REPO_REF`, and `LINUX_SETUP_INSTALL_DIR` to control where the
+repository is fetched from and cloned to.
 
-## Local Development
+### Interactive flow
 
-Run setup from the current checkout:
+When run from a terminal with no values supplied, the installer:
+
+1. Installs Gum if it is missing.
+2. Asks you to choose a tier.
+3. Shows a checklist of optional extras (space to toggle, zero or more).
+4. Asks whether to apply personal config; if yes, prompts for git name and email.
+5. Shows a preflight summary box and asks for confirmation before making changes.
+6. Installs the selected tier, extras, and config, then prints a recap box.
+
+A non-interactive run (piped input, no TTY) requires at least a tier and a
+config choice up front, since there is nowhere to prompt.
+
+## Local development
+
+Run setup directly from a checkout:
 
 ```bash
 bash setup.sh essentials --no-config
 ```
 
-### Test in a VM with Quickemu
-
-Install the required tools and create a directory for test VMs:
+Lint the shell scripts the same way CI does:
 
 ```bash
-sudo apt install quickemu qemu-utils cloud-image-utils
-mkdir -p ~/VMs/linux-setup-tests
-cd ~/VMs/linux-setup-tests
+shellcheck -x $(git ls-files '*.sh')
 ```
 
-#### Ubuntu Minimal
+A GitHub Actions workflow (`.github/workflows/shellcheck.yml`) runs the same
+shellcheck pass on every push and pull request.
 
-Ubuntu provides a small, preinstalled cloud image instead of a minimal installer ISO. Download the Ubuntu 24.04 LTS minimal image and expand its virtual disk to 64 GB:
+## Testing in a VM (virt-manager + snapshots)
+
+The cleanest way to test the installer end-to-end is a throwaway Debian/Ubuntu
+VM under [virt-manager](https://virt-manager.org/) (libvirt/KVM). Install the
+OS once, take a **clean snapshot**, run the installer, then **restore the
+snapshot** to retest from a pristine system as many times as you like.
+
+### 1. Install virtualization tooling
 
 ```bash
-mkdir -p ubuntu-test
-curl -fL \
-  -o ubuntu-test/disk.qcow2 \
-  https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img
-qemu-img resize ubuntu-test/disk.qcow2 64G
+sudo apt install -y virt-manager qemu-system-x86 libvirt-daemon-system
+sudo usermod -aG libvirt "$USER"   # log out and back in for this to take effect
 ```
 
-Cloud images use cloud-init for initial user setup. Create a test user:
+### 2. Create a VM
+
+Download an installer image:
+
+- Debian: the amd64 **netinst** image from <https://www.debian.org/CD/netinst/>
+- Ubuntu: a Desktop or Server ISO from <https://ubuntu.com/download>
+
+Create the VM from the ISO, either through the virt-manager GUI
+(*File → New Virtual Machine → Local install media*) or with `virt-install`:
 
 ```bash
-cat > ubuntu-test/user-data <<'EOF'
-#cloud-config
-users:
-  - name: ubuntu
-    groups: [adm, sudo]
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    lock_passwd: false
-chpasswd:
-  expire: false
-  users:
-    - name: ubuntu
-      password: ubuntu
-      type: text
-ssh_pwauth: true
-EOF
+virt-install \
+  --name linux-setup-test \
+  --memory 4096 \
+  --vcpus 2 \
+  --disk size=64 \
+  --cdrom ~/Downloads/debian-13.0.0-amd64-netinst.iso \
+  --os-variant debian13 \
+  --graphics spice
 ```
 
-Create the cloud-init seed and `ubuntu-test.conf`:
+For Ubuntu, swap in the Ubuntu ISO and `--os-variant ubuntu24.04`. Run
+`virt-install --osinfo list` to find the exact variant name for your release.
+
+Complete the OS installation, creating a user with sudo privileges.
+
+### 3. Take a clean snapshot
+
+Shut the guest down so the snapshot captures a quiescent disk, then snapshot it:
 
 ```bash
-printf 'instance-id: ubuntu-test\nlocal-hostname: ubuntu-test\n' > ubuntu-test/meta-data
-cloud-localds ubuntu-test/seed.iso ubuntu-test/user-data ubuntu-test/meta-data
-
-cat > ubuntu-test.conf <<'EOF'
-#!/usr/bin/quickemu --vm
-guest_os="linux"
-disk_img="ubuntu-test/disk.qcow2"
-iso="ubuntu-test/seed.iso"
-EOF
+virsh shutdown linux-setup-test
+virsh snapshot-create-as linux-setup-test --name clean --description "Clean OS install"
 ```
 
-Start the VM and log in with username `ubuntu` and password `ubuntu`:
+You can also use the virt-manager GUI: open the VM, click the snapshots
+(camera) icon, and create a snapshot named `clean`.
+
+### 4. Run the installer
+
+Boot the VM and run the installer inside it, either from the published
+one-liner:
 
 ```bash
-quickemu --vm ubuntu-test.conf
+curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | bash
 ```
 
-The root filesystem should automatically expand to the 64 GB virtual disk during the first boot.
-
-#### Debian Netinst
-
-Download the official amd64 **netinst** image from [debian.org](https://www.debian.org/CD/netinst/) and save it as `debian-test/debian-netinst.iso`. Netinst contains only the installer and a basic package set; remaining packages are downloaded during installation.
-
-Create a 64 GB virtual disk:
-
-```bash
-mkdir -p debian-test
-mv ~/Downloads/debian-*-amd64-netinst.iso debian-test/debian-netinst.iso
-qemu-img create -f qcow2 debian-test/disk.qcow2 64G
-```
-
-Create `debian-test.conf`:
-
-```bash
-cat > debian-test.conf <<'EOF'
-#!/usr/bin/quickemu --vm
-guest_os="linux"
-disk_img="debian-test/disk.qcow2"
-iso="debian-test/debian-netinst.iso"
-EOF
-```
-
-Start the VM and install Debian:
-
-```bash
-quickemu --vm debian-test.conf
-```
-
-#### Test the Setup
-
-After the first boot or installation, shut down the guest and create a clean snapshot:
-
-```bash
-VM=ubuntu-test.conf # or debian-test.conf
-quickemu --vm "$VM" --snapshot create clean-install
-```
-
-Clone the repository inside the VM and run the installer:
+or from a local checkout to test in-progress changes:
 
 ```bash
 sudo apt update && sudo apt install -y git
@@ -212,10 +249,13 @@ cd linux-setup
 LINUX_SETUP_INSTALL_DIR="$(pwd)" bash setup.sh
 ```
 
-To repeat the test from a clean system, shut down the VM and restore the snapshot:
+### 5. Restore and retest
+
+To repeat the test from a clean system, revert to the snapshot and boot again:
 
 ```bash
-VM=ubuntu-test.conf # or debian-test.conf
-quickemu --vm "$VM" --snapshot apply clean-install
-quickemu --vm "$VM"
+virsh snapshot-revert linux-setup-test --snapshotname clean
+virsh start linux-setup-test
 ```
+
+(The snapshots panel in the virt-manager GUI offers the same revert action.)
