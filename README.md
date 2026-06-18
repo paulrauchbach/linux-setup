@@ -88,6 +88,11 @@ snap, so the desktop layer installs Thunderbird from Mozilla's signed apt
 repository (pinned above the Ubuntu archive) instead; Debian ships a genuine
 `.deb`, so plain apt is used there.
 
+Each component is installed in isolation: if one fails (for example a third-party
+repository whose signing key has rotated or expired), it is rolled back so it
+cannot poison `apt-get update` for the rest of the run, a warning is logged, and
+setup continues. Anything skipped this way is listed in the closing recap.
+
 **Brave Origin** is free on Linux but shows a one-time *Proceed with Origin for
 free* prompt on first launch — complete it manually. When `--config` is enabled,
 a managed browser policy is installed (see below).

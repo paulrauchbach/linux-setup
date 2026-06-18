@@ -40,7 +40,7 @@ install_github_cli() {
 		"https://cli.github.com/packages/githubcli-archive-keyring.gpg" \
 		"/etc/apt/keyrings/githubcli-archive-keyring.gpg" \
 		"deb [arch=$architecture signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-		"/etc/apt/sources.list.d/github-cli.list"
+		"/etc/apt/sources.list.d/github-cli.list" || return 1
 	apt_install gh
 }
 
@@ -72,15 +72,19 @@ install_fastfetch() {
 			architecture="aarch64"
 			;;
 		*)
-			die "Unsupported architecture for Fastfetch: $architecture"
+			log_warn "Unsupported architecture for Fastfetch: $architecture"
+			return 1
 			;;
 	esac
 
 	package_file="$(mktemp --suffix=.deb)"
 	package_url="https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${architecture}.deb"
 
-	run_quiet "Downloading Fastfetch" curl -fsSL "$package_url" -o "$package_file"
-	run_quiet "Installing Fastfetch" sudo apt-get install -y -qq "$package_file"
+	if ! run_quiet "Downloading Fastfetch" curl -fsSL "$package_url" -o "$package_file" ||
+		! run_quiet "Installing Fastfetch" sudo apt-get install -y -qq "$package_file"; then
+		rm -f "$package_file"
+		return 1
+	fi
 	rm -f "$package_file"
 }
 
@@ -99,18 +103,23 @@ install_mise() {
 		"https://mise.en.dev/gpg-key.pub" \
 		"/etc/apt/keyrings/mise-archive-keyring.asc" \
 		"deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.asc] https://mise.en.dev/deb stable main" \
-		"/etc/apt/sources.list.d/mise.list"
-	apt_install mise
+		"/etc/apt/sources.list.d/mise.list" || return 1
+	apt_install mise || return 1
 
-	command -v mise >/dev/null 2>&1 || die "mise installation completed but the command is unavailable."
+	command -v mise >/dev/null 2>&1 || {
+		log_warn "mise installation completed but the command is unavailable."
+		return 1
+	}
 	MISE_PREPARED=1
 }
 
 install_mise_defaults() {
-	install_mise
-	command -v mise >/dev/null 2>&1 || return 0
-	run_quiet "Installing default Python with mise" mise use --global python@latest
-	run_quiet "Installing default Node.js with mise" mise use --global node@lts
+	local status=0
+
+	install_mise || return 1
+	run_quiet "Installing default Python with mise" mise use --global python@latest || status=1
+	run_quiet "Installing default Node.js with mise" mise use --global node@lts || status=1
+	return "$status"
 }
 
 install_lazygit() {
@@ -139,7 +148,8 @@ install_lazygit() {
 			architecture="arm64"
 			;;
 		*)
-			die "Unsupported architecture for lazygit: $architecture"
+			log_warn "Unsupported architecture for lazygit: $architecture"
+			return 1
 			;;
 	esac
 
@@ -148,18 +158,23 @@ install_lazygit() {
 			sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' |
 			head -n 1
 	)"
-	[ -n "$version" ] || die "Could not determine the latest lazygit version."
+	[ -n "$version" ] || {
+		log_warn "Could not determine the latest lazygit version."
+		return 1
+	}
 
 	archive="$(mktemp)"
 	extract_dir="$(mktemp -d)"
 	archive_url="https://github.com/jesseduffield/lazygit/releases/download/v${version}/lazygit_${version}_Linux_${architecture}.tar.gz"
 
-	run_quiet "Downloading lazygit $version" curl -fsSL "$archive_url" -o "$archive"
-	run_quiet "Extracting lazygit" tar -xzf "$archive" -C "$extract_dir" lazygit
-	run_quiet "Installing lazygit" sudo install -m 0755 "$extract_dir/lazygit" /usr/local/bin/lazygit
+	if ! run_quiet "Downloading lazygit $version" curl -fsSL "$archive_url" -o "$archive" ||
+		! run_quiet "Extracting lazygit" tar -xzf "$archive" -C "$extract_dir" lazygit ||
+		! run_quiet "Installing lazygit" sudo install -m 0755 "$extract_dir/lazygit" /usr/local/bin/lazygit; then
+		rm -rf "$archive" "$extract_dir"
+		return 1
+	fi
 
-	rm -f "$archive" "$extract_dir/lazygit"
-	rmdir "$extract_dir"
+	rm -rf "$archive" "$extract_dir"
 }
 
 install_lazydocker() {
@@ -192,18 +207,18 @@ Signed-By: /etc/apt/keyrings/docker.asc"
 		"https://download.docker.com/linux/$LINUX_SETUP_OS_ID/gpg" \
 		"/etc/apt/keyrings/docker.asc" \
 		"$docker_source" \
-		"/etc/apt/sources.list.d/docker.sources"
+		"/etc/apt/sources.list.d/docker.sources" || return 1
 
 	apt_install \
 		docker-ce \
 		docker-ce-cli \
 		containerd.io \
 		docker-buildx-plugin \
-		docker-compose-plugin
+		docker-compose-plugin || return 1
 
 	user_name="$(id -un)"
-	run_quiet "Adding $user_name to the docker group" sudo usermod -aG docker "$user_name"
-	install_lazydocker
+	run_quiet "Adding $user_name to the docker group" sudo usermod -aG docker "$user_name" || return 1
+	try_install "lazydocker" install_lazydocker
 }
 
 install_ollama() {
@@ -221,14 +236,15 @@ install_node_clis() {
 		@google/gemini-cli
 	)
 	local app
+	local status=0
 
-	install_mise
-	command -v mise >/dev/null 2>&1 || return 0
-	run_quiet "Ensuring Node.js is available" mise use --global node@lts
+	install_mise || return 1
+	run_quiet "Ensuring Node.js is available" mise use --global node@lts || return 1
 
 	for app in "${node_apps[@]}"; do
-		run_quiet "Installing $app" mise exec node@lts -- npm install --global "$app"
+		run_quiet "Installing $app" mise exec node@lts -- npm install --global "$app" || status=1
 	done
+	return "$status"
 }
 
 install_vscode() {
@@ -242,7 +258,7 @@ install_vscode() {
 		"https://packages.microsoft.com/keys/microsoft.asc" \
 		"/etc/apt/keyrings/microsoft.asc" \
 		"deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/microsoft.asc] https://packages.microsoft.com/repos/code stable main" \
-		"/etc/apt/sources.list.d/vscode.list"
+		"/etc/apt/sources.list.d/vscode.list" || return 1
 	apt_install code
 }
 
@@ -257,7 +273,7 @@ install_signal() {
 		"https://updates.signal.org/desktop/apt/keys.asc" \
 		"/etc/apt/keyrings/signal-desktop-keyring.asc" \
 		"deb [arch=amd64 signed-by=/etc/apt/keyrings/signal-desktop-keyring.asc] https://updates.signal.org/desktop/apt xenial main" \
-		"/etc/apt/sources.list.d/signal-xenial.list"
+		"/etc/apt/sources.list.d/signal-xenial.list" || return 1
 	apt_install signal-desktop
 }
 
@@ -267,12 +283,15 @@ install_spotify() {
 		return 0
 	}
 
+	# Spotify rotates (and expires) the repository signing key periodically; the
+	# file name encodes the long key ID. If apt later reports "NO_PUBKEY <id>"
+	# for repository.spotify.com, update this URL to pubkey_<id>.gpg.
 	add_signed_apt_repo \
 		"Spotify" \
-		"https://download.spotify.com/debian/pubkey_0D811D58.gpg" \
+		"https://download.spotify.com/debian/pubkey_5384CE82BA52C83A.gpg" \
 		"/etc/apt/keyrings/spotify.gpg" \
 		"deb [arch=amd64 signed-by=/etc/apt/keyrings/spotify.gpg] https://repository.spotify.com stable non-free" \
-		"/etc/apt/sources.list.d/spotify.list"
+		"/etc/apt/sources.list.d/spotify.list" || return 1
 	apt_install spotify-client
 }
 
@@ -294,7 +313,7 @@ install_thunderbird() {
 			"https://packages.mozilla.org/apt/repo-signing-key.gpg" \
 			"/etc/apt/keyrings/packages.mozilla.org.asc" \
 			"deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
-			"/etc/apt/sources.list.d/mozilla.list"
+			"/etc/apt/sources.list.d/mozilla.list" || return 1
 
 		pref_tmp="$(mktemp)"
 		printf '%s\n' \
@@ -302,9 +321,12 @@ install_thunderbird() {
 			"Pin: origin packages.mozilla.org" \
 			"Pin-Priority: 1000" >"$pref_tmp"
 		run_quiet "Pinning the Mozilla apt repository" \
-			sudo install -D -m 0644 "$pref_tmp" /etc/apt/preferences.d/mozilla
+			sudo install -D -m 0644 "$pref_tmp" /etc/apt/preferences.d/mozilla || {
+			rm -f "$pref_tmp"
+			return 1
+		}
 		rm -f "$pref_tmp"
-		apt_update yes
+		apt_update yes || return 1
 	fi
 
 	apt_install thunderbird
@@ -332,7 +354,7 @@ Signed-By: /etc/apt/keyrings/brave-browser-archive-keyring.gpg"
 		"https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg" \
 		"/etc/apt/keyrings/brave-browser-archive-keyring.gpg" \
 		"$brave_source" \
-		"/etc/apt/sources.list.d/brave-browser.sources"
+		"/etc/apt/sources.list.d/brave-browser.sources" || return 1
 	apt_install brave-origin
 }
 
@@ -347,16 +369,19 @@ install_nerd_font() {
 		return 0
 	fi
 
-	apt_install fontconfig
+	apt_install fontconfig || return 1
 
 	archive="$(mktemp --suffix=.zip)"
-	run_quiet "Downloading $font_label" curl -fsSL "$archive_url" -o "$archive"
 	mkdir -p "$font_dir"
-	run_quiet "Extracting $font_label" unzip -o -q "$archive" -d "$font_dir"
+	if ! run_quiet "Downloading $font_label" curl -fsSL "$archive_url" -o "$archive" ||
+		! run_quiet "Extracting $font_label" unzip -o -q "$archive" -d "$font_dir"; then
+		rm -f "$archive"
+		return 1
+	fi
 	rm -f "$archive"
 
 	if command -v fc-cache >/dev/null 2>&1; then
-		run_quiet "Refreshing the font cache" fc-cache -f "$font_dir"
+		run_quiet "Refreshing the font cache" fc-cache -f "$font_dir" || true
 	fi
 }
 
@@ -367,15 +392,15 @@ install_desktop() {
 	}
 
 	if [ "$#" -gt 0 ]; then
-		apt_install "$@"
+		try_install "Desktop packages" apt_install "$@"
 	fi
 
-	install_thunderbird
-	install_vscode
-	install_signal
-	install_spotify
-	install_brave
-	install_nerd_font
+	try_install "Thunderbird" install_thunderbird
+	try_install "Visual Studio Code" install_vscode
+	try_install "Signal" install_signal
+	try_install "Spotify" install_spotify
+	try_install "Brave Origin" install_brave
+	try_install "Nerd Font" install_nerd_font
 }
 
 install_extras() {
@@ -387,16 +412,16 @@ install_extras() {
 	for extra in "${selected[@]}"; do
 		case "$extra" in
 			docker)
-				install_docker
+				try_install "Docker" install_docker
 				;;
 			ollama)
-				install_ollama
+				try_install "Ollama" install_ollama
 				;;
 			claude)
-				install_claude
+				try_install "Claude Code" install_claude
 				;;
 			node-clis)
-				install_node_clis
+				try_install "Node CLIs" install_node_clis
 				;;
 		esac
 	done

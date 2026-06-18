@@ -234,6 +234,12 @@ PATH: ensure \$HOME/.local/bin is available in your shell."
 mise: activate mise in your shell to use managed runtimes and Node CLIs."
 	fi
 
+	if [ "${#INSTALL_FAILURES[@]}" -gt 0 ]; then
+		recap="$recap
+
+Skipped (review the log above): ${INSTALL_FAILURES[*]}"
+	fi
+
 	if has_interactive_tty && command -v gum >/dev/null 2>&1; then
 		ui_box "Setup complete" "$recap"
 	else
@@ -399,15 +405,15 @@ main() {
 	fi
 
 	log_title "Installing essentials"
-	apt_install "${ESSENTIAL_PACKAGES[@]}"
-	install_fastfetch
-	install_github_cli
+	try_install "Essential packages" apt_install "${ESSENTIAL_PACKAGES[@]}"
+	try_install "Fastfetch" install_fastfetch
+	try_install "GitHub CLI" install_github_cli
 
 	if [ "$tier" = "dev" ] || [ "$tier" = "desktop" ]; then
 		log_title "Installing dev tools"
-		install_mise_defaults
-		apt_install "${DEV_PACKAGES[@]}"
-		install_lazygit
+		try_install "mise runtimes" install_mise_defaults
+		try_install "Dev packages" apt_install "${DEV_PACKAGES[@]}"
+		try_install "lazygit" install_lazygit
 	fi
 
 	if [ "$tier" = "desktop" ]; then

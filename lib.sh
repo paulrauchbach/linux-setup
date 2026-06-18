@@ -22,6 +22,7 @@ LINUX_SETUP_OS_ID="unknown"
 LINUX_SETUP_OS_CODENAME=""
 APT_METADATA_UPDATED=0
 SUDO_KEEPALIVE_PID=""
+INSTALL_FAILURES=()
 
 log_title() {
 	printf '\n%s%s%s\n' "$bold" "$*" "$reset"
@@ -71,6 +72,24 @@ run_quiet() {
 	sed 's/^/    /' "$log_file" >&2
 	rm -f "$log_file"
 	return 1
+}
+
+# Run a single installation step in isolation. A failure is logged and recorded
+# in INSTALL_FAILURES, but try_install still returns success so that 'set -e'
+# does not abort the rest of the setup. Wrapping the step in the 'if' condition
+# also disables 'set -e' inside the installer, so a non-zero command part-way
+# through is contained instead of killing the whole run.
+try_install() {
+	local label="$1"
+	shift
+
+	if "$@"; then
+		return 0
+	fi
+
+	log_warn "$label did not complete; skipping it and continuing the setup."
+	INSTALL_FAILURES+=("$label")
+	return 0
 }
 
 detect_platform() {
@@ -128,10 +147,16 @@ apt_update() {
 	is_supported_platform || return 0
 	require_sudo
 
-	if [ "$APT_METADATA_UPDATED" -eq 0 ] || [ "$force" = "yes" ]; then
-		run_quiet "Updating apt metadata" sudo apt-get -qq update
-		APT_METADATA_UPDATED=1
+	if [ "$APT_METADATA_UPDATED" -eq 1 ] && [ "$force" != "yes" ]; then
+		return 0
 	fi
+
+	if ! run_quiet "Updating apt metadata" sudo apt-get -qq update; then
+		return 1
+	fi
+
+	APT_METADATA_UPDATED=1
+	return 0
 }
 
 apt_install() {
@@ -144,7 +169,7 @@ apt_install() {
 		return 0
 	fi
 
-	apt_update
+	apt_update || return 1
 
 	for package in "$@"; do
 		if apt-cache show "$package" >/dev/null 2>&1; then
@@ -155,12 +180,14 @@ apt_install() {
 	done
 
 	if [ "${#available[@]}" -gt 0 ]; then
-		run_quiet "Installing packages: ${available[*]}" sudo apt-get install -y -qq "${available[@]}"
+		run_quiet "Installing packages: ${available[*]}" sudo apt-get install -y -qq "${available[@]}" || return 1
 	fi
 
 	if [ "${#missing[@]}" -gt 0 ]; then
 		log_warn "Packages unavailable from configured apt sources: ${missing[*]}"
 	fi
+
+	return 0
 }
 
 add_signed_apt_repo() {
@@ -171,6 +198,7 @@ add_signed_apt_repo() {
 	local source_path="$5"
 	local key_tmp
 	local source_tmp
+	local status=0
 
 	is_supported_platform || {
 		log_warn "Skipping $display_name repository on unsupported platform '$LINUX_SETUP_OS_ID'."
@@ -181,13 +209,34 @@ add_signed_apt_repo() {
 	key_tmp="$(mktemp)"
 	source_tmp="$(mktemp)"
 
-	run_quiet "Downloading $display_name signing key" curl -fsSL "$key_url" -o "$key_tmp"
-	run_quiet "Installing $display_name signing key" sudo install -D -m 0644 "$key_tmp" "$key_path"
-	printf '%s\n' "$source_line" >"$source_tmp"
-	run_quiet "Installing $display_name apt source" sudo install -D -m 0644 "$source_tmp" "$source_path"
+	if run_quiet "Downloading $display_name signing key" curl -fsSL "$key_url" -o "$key_tmp" &&
+		run_quiet "Installing $display_name signing key" sudo install -D -m 0644 "$key_tmp" "$key_path"; then
+		printf '%s\n' "$source_line" >"$source_tmp"
+		run_quiet "Installing $display_name apt source" sudo install -D -m 0644 "$source_tmp" "$source_path" || status=1
+	else
+		status=1
+	fi
 
 	rm -f "$key_tmp" "$source_tmp"
-	apt_update yes
+
+	if [ "$status" -ne 0 ]; then
+		log_warn "$display_name repository could not be configured; cleaning up partial files."
+		sudo rm -f "$key_path" "$source_path" 2>/dev/null || true
+		return 1
+	fi
+
+	# Validate the new repository on its own. If its signing key cannot verify
+	# the release (a rotated or expired key), 'apt-get update' would fail for
+	# every later package too, so roll the repository back and refresh apt with
+	# a clean source list before continuing.
+	if ! apt_update yes; then
+		log_warn "$display_name repository failed to validate; removing it so other installs are unaffected."
+		sudo rm -f "$key_path" "$source_path" 2>/dev/null || true
+		apt_update yes || true
+		return 1
+	fi
+
+	return 0
 }
 
 run_remote_script() {
@@ -195,11 +244,16 @@ run_remote_script() {
 	local url="$2"
 	local interpreter="${3:-bash}"
 	local script_tmp
+	local status=0
 
 	script_tmp="$(mktemp)"
-	run_quiet "Downloading $display_name installer" curl -fsSL "$url" -o "$script_tmp"
-	run_quiet "Running $display_name installer" "$interpreter" "$script_tmp"
+	if run_quiet "Downloading $display_name installer" curl -fsSL "$url" -o "$script_tmp"; then
+		run_quiet "Running $display_name installer" "$interpreter" "$script_tmp" || status=1
+	else
+		status=1
+	fi
 	rm -f "$script_tmp"
+	return "$status"
 }
 
 ui_choose_tier() {
