@@ -266,3 +266,38 @@ apply_personal_config() {
 	apply_vscode_config
 	apply_brave_policy
 }
+
+apply_selected_config() {
+	local configs="$1"
+	local full_name="$2"
+	local email="$3"
+	local selected=()
+	local config
+
+	IFS=',' read -r -a selected <<<"$configs"
+	for config in "${selected[@]}"; do
+		case "$config" in
+			zsh)
+				apply_zsh_config
+				;;
+			tmux)
+				apply_tmux_config
+				;;
+			git)
+				apply_git_config "$full_name" "$email"
+				;;
+			alacritty)
+				apply_alacritty_config
+				;;
+			vscode)
+				apply_vscode_config
+				;;
+			brave)
+				apply_brave_policy
+				;;
+			*)
+				die "Unknown config '$config'."
+				;;
+		esac
+	done
+}

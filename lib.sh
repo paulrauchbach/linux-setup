@@ -272,11 +272,22 @@ ui_choose_tier() {
 	gum choose --header "Choose an install tier" essentials dev desktop </dev/tty
 }
 
+ui_choose_mode() {
+	gum choose --header "What do you want to do?" install update-config </dev/tty
+}
+
 ui_choose_extras() {
 	gum choose \
 		--no-limit \
 		--header "Choose optional extras (space to select)" \
 		docker ollama claude agent-harnesses </dev/tty
+}
+
+ui_choose_configs() {
+	gum choose \
+		--no-limit \
+		--header "Choose configs to update (space to select)" \
+		zsh tmux git alacritty vscode brave </dev/tty
 }
 
 ui_confirm_config() {

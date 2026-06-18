@@ -56,12 +56,25 @@ Options:
   -h, --help            Show this help
 
 Environment:
+  LINUX_SETUP_MODE
   LINUX_SETUP_TIER
   LINUX_SETUP_CONFIG
   LINUX_SETUP_FULL_NAME
   LINUX_SETUP_EMAIL
   LINUX_SETUP_EXTRAS
+  LINUX_SETUP_UPDATE_CONFIGS
 EOF
+}
+
+validate_mode() {
+	case "$1" in
+		install | update-config)
+			return 0
+			;;
+		*)
+			die "Unknown mode '$1'. Choose install or update-config."
+			;;
+	esac
 }
 
 normalize_bool() {
@@ -129,11 +142,58 @@ normalize_extras() {
 	printf '%s\n' "$normalized"
 }
 
+normalize_configs() {
+	local normalized=""
+	local config
+
+	while IFS= read -r config; do
+		config="${config#"${config%%[![:space:]]*}"}"
+		config="${config%"${config##*[![:space:]]}"}"
+		[ -n "$config" ] || continue
+
+		case "$config" in
+			zsh | tmux | git | alacritty | vscode | brave)
+				;;
+			*)
+				die "Unknown config '$config'. Choose zsh, tmux, git, alacritty, vscode, or brave."
+				;;
+		esac
+
+		case ",$normalized," in
+			*",$config,"*)
+				continue
+				;;
+		esac
+
+		if [ -n "$normalized" ]; then
+			normalized="$normalized,$config"
+		else
+			normalized="$config"
+		fi
+	done < <(printf '%s\n' "$1" | tr ',' '\n')
+
+	printf '%s\n' "$normalized"
+}
+
 has_extra() {
 	local extras="$1"
 	local expected="$2"
 
 	case ",$extras," in
+		*",$expected,"*)
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+has_config() {
+	local configs="$1"
+	local expected="$2"
+
+	case ",$configs," in
 		*",$expected,"*)
 			return 0
 			;;
@@ -150,6 +210,16 @@ format_extras() {
 		printf 'none\n'
 	else
 		printf '%s\n' "${extras//,/, }"
+	fi
+}
+
+format_configs() {
+	local configs="$1"
+
+	if [ -z "$configs" ]; then
+		printf 'none\n'
+	else
+		printf '%s\n' "${configs//,/, }"
 	fi
 }
 
@@ -248,6 +318,52 @@ Skipped (review the log above): ${INSTALL_FAILURES[*]}"
 	fi
 }
 
+show_update_config_preflight() {
+	local configs="$1"
+	local full_name="$2"
+	local email="$3"
+	local summary
+
+	summary="Configs: $(format_configs "$configs")"
+
+	if has_config "$configs" git; then
+		summary="$summary
+Git name: $full_name
+Git email: $email"
+	fi
+
+	if has_interactive_tty; then
+		ui_box "Linux Setup" "$summary"
+	else
+		log_title "Linux Setup"
+		printf '%s\n' "$summary"
+	fi
+}
+
+show_update_config_recap() {
+	local configs="$1"
+	local recap
+
+	recap="Updated configs: $(format_configs "$configs")"
+
+	if has_config "$configs" zsh; then
+		recap="$recap
+Shell: run 'exec zsh' now; new login sessions use zsh by default."
+	fi
+
+	if has_config "$configs" brave; then
+		recap="$recap
+Brave Origin: verify the managed policy at brave://policy."
+	fi
+
+	if has_interactive_tty && command -v gum >/dev/null 2>&1; then
+		ui_box "Config update complete" "$recap"
+	else
+		log_title "Config update complete"
+		printf '%s\n' "$recap"
+	fi
+}
+
 main() {
 	local tier_arg=""
 	local config_arg=""
@@ -329,8 +445,14 @@ main() {
 	local config_value="${config_arg:-${LINUX_SETUP_CONFIG:-}}"
 	local full_name="${full_name_arg:-${LINUX_SETUP_FULL_NAME:-}}"
 	local email="${email_arg:-${LINUX_SETUP_EMAIL:-}}"
+	local mode="${LINUX_SETUP_MODE:-}"
+	local update_configs="${LINUX_SETUP_UPDATE_CONFIGS:-}"
 	local extras=""
 	local extras_set=0
+
+	if [ -n "$mode" ]; then
+		validate_mode "$mode"
+	fi
 
 	if [ -n "$tier" ]; then
 		validate_tier "$tier"
@@ -356,6 +478,53 @@ main() {
 
 	if has_interactive_tty; then
 		install_gum
+	fi
+
+	if [ -z "$mode" ]; then
+		if has_interactive_tty; then
+			mode="$(ui_choose_mode)" || die "Mode selection cancelled."
+			validate_mode "$mode"
+		else
+			mode="install"
+		fi
+	fi
+
+	if [ "$mode" = "update-config" ]; then
+		if [ -z "$update_configs" ]; then
+			has_interactive_tty ||
+				die "Config selection is required for a non-interactive update. Set LINUX_SETUP_UPDATE_CONFIGS."
+			update_configs="$(ui_choose_configs)" || die "Config selection cancelled."
+		fi
+
+		update_configs="$(normalize_configs "$update_configs")"
+		[ -n "$update_configs" ] || die "No configs selected."
+
+		if has_config "$update_configs" git; then
+			if [ -z "$full_name" ]; then
+				has_interactive_tty ||
+					die "Git name is required when updating git config. Pass --name or set LINUX_SETUP_FULL_NAME."
+				full_name="$(prompt_nonempty "Full name" "Your Name")"
+			fi
+
+			if [ -z "$email" ]; then
+				has_interactive_tty ||
+					die "Git email is required when updating git config. Pass --email or set LINUX_SETUP_EMAIL."
+				email="$(prompt_nonempty "Email" "you@example.com")"
+			fi
+		fi
+
+		show_update_config_preflight "$update_configs" "$full_name" "$email"
+
+		if has_interactive_tty && ! ui_confirm_run; then
+			log_warn "Config update cancelled."
+			return 0
+		fi
+
+		detect_platform
+		log_title "Applying selected config"
+		apply_selected_config "$update_configs" "$full_name" "$email"
+		show_update_config_recap "$update_configs"
+		return 0
 	fi
 
 	if [ -z "$tier" ]; then
