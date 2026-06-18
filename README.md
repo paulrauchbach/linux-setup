@@ -116,9 +116,8 @@ Interactive runs show a Gum checklist where zero or more extras can be selected.
 With `--config`, the installer also installs and configures zsh, oh-my-zsh, the
 bundled theme, tmux, and the supplied git identity. It sets zsh as the default
 login shell and loads Oh My Zsh from `.zshrc` (managing a clearly-delimited
-block that exports `~/.local/bin` on `PATH`, activates mise, and auto-starts
-tmux for interactive sessions). With `--no-config`, no dotfile or login-shell
-setting is modified.
+block that exports `~/.local/bin` on `PATH` and activates mise). With
+`--no-config`, no dotfile or login-shell setting is modified.
 
 When config is enabled, a git `--name` and `--email` are required (prompted for
 interactively, or supplied via flags / environment variables).

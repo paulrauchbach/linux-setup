@@ -188,11 +188,6 @@ export PATH="$HOME/.local/bin:$PATH"
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
-
-if [[ -o interactive && -z "$TMUX" && -z "$SSH_CONNECTION" && -z "$NO_TMUX" ]] &&
-  command -v tmux >/dev/null 2>&1; then
-  exec tmux new-session -A -s main
-fi
 # <<< linux-setup managed <<<
 EOF
 
