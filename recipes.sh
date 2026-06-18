@@ -231,17 +231,151 @@ install_node_clis() {
 	done
 }
 
-install_desktop() {
-	# TODO(#1): Populate the desktop layer with the concrete GUI application
-	# list. The tier is wired as the top additive layer (essentials + dev +
-	# desktop); only the GUI package set is deferred until the apps are decided.
-	# See https://github.com/paulrauchbach/linux-setup/issues/1.
-	if [ "$#" -eq 0 ]; then
-		log_info "Desktop GUI apps are deferred (TODO #1); nothing to install yet."
+install_vscode() {
+	is_supported_platform || {
+		log_warn "Skipping VS Code on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	add_signed_apt_repo \
+		"Visual Studio Code" \
+		"https://packages.microsoft.com/keys/microsoft.asc" \
+		"/etc/apt/keyrings/microsoft.asc" \
+		"deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/microsoft.asc] https://packages.microsoft.com/repos/code stable main" \
+		"/etc/apt/sources.list.d/vscode.list"
+	apt_install code
+}
+
+install_signal() {
+	is_supported_platform || {
+		log_warn "Skipping Signal on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	add_signed_apt_repo \
+		"Signal" \
+		"https://updates.signal.org/desktop/apt/keys.asc" \
+		"/etc/apt/keyrings/signal-desktop-keyring.asc" \
+		"deb [arch=amd64 signed-by=/etc/apt/keyrings/signal-desktop-keyring.asc] https://updates.signal.org/desktop/apt xenial main" \
+		"/etc/apt/sources.list.d/signal-xenial.list"
+	apt_install signal-desktop
+}
+
+install_spotify() {
+	is_supported_platform || {
+		log_warn "Skipping Spotify on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	add_signed_apt_repo \
+		"Spotify" \
+		"https://download.spotify.com/debian/pubkey_0D811D58.gpg" \
+		"/etc/apt/keyrings/spotify.gpg" \
+		"deb [arch=amd64 signed-by=/etc/apt/keyrings/spotify.gpg] https://repository.spotify.com stable non-free" \
+		"/etc/apt/sources.list.d/spotify.list"
+	apt_install spotify-client
+}
+
+install_thunderbird() {
+	local pref_tmp
+
+	is_supported_platform || {
+		log_warn "Skipping Thunderbird on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	# Ubuntu's distro 'thunderbird' is a transitional package that pulls the
+	# snap, so install from Mozilla's signed apt repository (pinned above the
+	# Ubuntu archive) instead. Debian ships a genuine .deb, so plain apt is
+	# enough there.
+	if [ "$LINUX_SETUP_OS_ID" = "ubuntu" ]; then
+		add_signed_apt_repo \
+			"Mozilla" \
+			"https://packages.mozilla.org/apt/repo-signing-key.gpg" \
+			"/etc/apt/keyrings/packages.mozilla.org.asc" \
+			"deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
+			"/etc/apt/sources.list.d/mozilla.list"
+
+		pref_tmp="$(mktemp)"
+		printf '%s\n' \
+			"Package: *" \
+			"Pin: origin packages.mozilla.org" \
+			"Pin-Priority: 1000" >"$pref_tmp"
+		run_quiet "Pinning the Mozilla apt repository" \
+			sudo install -D -m 0644 "$pref_tmp" /etc/apt/preferences.d/mozilla
+		rm -f "$pref_tmp"
+		apt_update yes
+	fi
+
+	apt_install thunderbird
+}
+
+install_brave() {
+	local architecture
+	local brave_source
+
+	is_supported_platform || {
+		log_warn "Skipping Brave Origin on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	architecture="$(dpkg --print-architecture)"
+	brave_source="Types: deb
+URIs: https://brave-browser-apt-release.s3.brave.com/
+Suites: stable
+Components: main
+Architectures: $architecture
+Signed-By: /etc/apt/keyrings/brave-browser-archive-keyring.gpg"
+
+	add_signed_apt_repo \
+		"Brave" \
+		"https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg" \
+		"/etc/apt/keyrings/brave-browser-archive-keyring.gpg" \
+		"$brave_source" \
+		"/etc/apt/sources.list.d/brave-browser.sources"
+	apt_install brave-origin
+}
+
+install_nerd_font() {
+	local font_name="JetBrainsMono"
+	local font_label="JetBrainsMono Nerd Font"
+	local font_dir="$HOME/.local/share/fonts/${font_name}NerdFont"
+	local archive
+	local archive_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.zip"
+
+	if command -v fc-list >/dev/null 2>&1 && fc-list | grep -qiF "$font_label"; then
 		return 0
 	fi
 
-	apt_install "$@"
+	apt_install fontconfig
+
+	archive="$(mktemp --suffix=.zip)"
+	run_quiet "Downloading $font_label" curl -fsSL "$archive_url" -o "$archive"
+	mkdir -p "$font_dir"
+	run_quiet "Extracting $font_label" unzip -o -q "$archive" -d "$font_dir"
+	rm -f "$archive"
+
+	if command -v fc-cache >/dev/null 2>&1; then
+		run_quiet "Refreshing the font cache" fc-cache -f "$font_dir"
+	fi
+}
+
+install_desktop() {
+	is_supported_platform || {
+		log_warn "Skipping desktop GUI apps on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	if [ "$#" -gt 0 ]; then
+		apt_install "$@"
+	fi
+
+	install_thunderbird
+	install_vscode
+	install_signal
+	install_spotify
+	install_brave
+	install_nerd_font
 }
 
 install_extras() {

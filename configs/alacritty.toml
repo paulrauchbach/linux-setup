@@ -1,0 +1,37 @@
+# Managed by linux-setup (configs/alacritty.toml).
+
+[window]
+opacity = 0.96
+padding = { x = 8, y = 8 }
+dynamic_padding = true
+
+[scrolling]
+history = 10000
+
+[font]
+size = 11.0
+
+[font.normal]
+family = "JetBrainsMono Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono Nerd Font"
+style = "Italic"
+
+[cursor]
+style = { shape = "Block", blinking = "On" }
+
+# URL detection: Ctrl+Shift+U opens hint mode, or Ctrl+click a link.
+[[hints.enabled]]
+command = "xdg-open"
+hyperlinks = true
+post_processing = true
+persist = false
+mouse = { enabled = true, mods = "Control" }
+binding = { key = "U", mods = "Control|Shift" }
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)\S+'

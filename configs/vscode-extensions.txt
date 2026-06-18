@@ -1,0 +1,7 @@
+# VS Code extensions installed by linux-setup when --config is enabled.
+# One extension id per line; blank lines and lines starting with # are ignored.
+# Edit this list to match your stack, then re-run `setup.sh desktop --config`.
+ms-python.python
+ms-azuretools.vscode-docker
+esbenp.prettier-vscode
+eamodio.gitlens

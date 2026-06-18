@@ -32,11 +32,15 @@ DEV_PACKAGES=(
 	pipx
 )
 
-# TODO(#1): The concrete desktop GUI application list is deliberately deferred.
-# The desktop tier is fully wired as the top additive layer (essentials + dev +
-# desktop); only this package set stays empty until the app list is decided.
-# See https://github.com/paulrauchbach/linux-setup/issues/1.
-DESKTOP_PACKAGES=()
+# Desktop GUI packages installed straight from the distro apt repository.
+# Apps that need a third-party signed repo (VS Code, Signal, Spotify, Brave
+# Origin), the Mozilla-repo Thunderbird, and the Nerd Font are handled by their
+# own installers in install_desktop.
+DESKTOP_PACKAGES=(
+	alacritty
+	keepassxc
+	vlc
+)
 
 usage() {
 	cat <<'EOF'
@@ -210,6 +214,12 @@ Shell: run 'exec zsh' now; new login sessions use zsh by default."
 	if has_extra "$extras" docker; then
 		recap="$recap
 Docker: log out and back in for group membership to take effect."
+	fi
+
+	if [ "$tier" = "desktop" ]; then
+		recap="$recap
+Brave Origin: complete the one-time free activation on first launch, then verify the managed policy at brave://policy.
+Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Nerd Font."
 	fi
 
 	if [ "$config_enabled" = "no" ] &&
