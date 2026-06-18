@@ -25,3 +25,13 @@ style = "Italic"
 
 [cursor]
 style = { shape = "Block", blinking = "On" }
+
+# URL detection: Ctrl+Shift+U opens hint mode, or Ctrl+click a link.
+[[hints.enabled]]
+command = "xdg-open"
+hyperlinks = true
+post_processing = true
+persist = false
+mouse = { enabled = true, mods = "Control" }
+binding = { key = "U", mods = "Control|Shift" }
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)\S+'
