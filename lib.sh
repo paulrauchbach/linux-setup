@@ -190,6 +190,16 @@ apt_install() {
 	return 0
 }
 
+backup_system_file_for_linux_setup() {
+	local file="$1"
+	local backup
+
+	[ -e "$file" ] || return 0
+
+	backup="${file}.linux-setup-backup.$(date +%Y%m%d%H%M%S)"
+	run_quiet "Backing up $file" sudo cp -a "$file" "$backup"
+}
+
 add_signed_apt_repo() {
 	local display_name="$1"
 	local key_url="$2"
@@ -210,9 +220,11 @@ add_signed_apt_repo() {
 	source_tmp="$(mktemp)"
 
 	if run_quiet "Downloading $display_name signing key" curl -fsSL "$key_url" -o "$key_tmp" &&
+		backup_system_file_for_linux_setup "$key_path" &&
 		run_quiet "Installing $display_name signing key" sudo install -D -m 0644 "$key_tmp" "$key_path"; then
 		printf '%s\n' "$source_line" >"$source_tmp"
-		run_quiet "Installing $display_name apt source" sudo install -D -m 0644 "$source_tmp" "$source_path" || status=1
+		backup_system_file_for_linux_setup "$source_path" &&
+			run_quiet "Installing $display_name apt source" sudo install -D -m 0644 "$source_tmp" "$source_path" || status=1
 	else
 		status=1
 	fi
@@ -264,7 +276,7 @@ ui_choose_extras() {
 	gum choose \
 		--no-limit \
 		--header "Choose optional extras (space to select)" \
-		docker ollama claude node-clis </dev/tty
+		docker ollama claude agent-harnesses </dev/tty
 }
 
 ui_confirm_config() {

@@ -34,11 +34,11 @@ curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/inst
   --email "you@example.com"
 ```
 
-Install the additive dev tier with Docker and the Node CLI bundle:
+Install the additive dev tier with Docker and native agent harnesses:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | \
-  bash -s -- dev --with docker,node-clis --no-config
+  bash -s -- dev --with docker,agent-harnesses --no-config
 ```
 
 ## Tiers
@@ -104,7 +104,8 @@ Extras are independent of the selected tier and are chosen with `--with`:
 - `docker`: Docker Engine, Compose and Buildx plugins, plus lazydocker
 - `ollama`: Ollama's official Linux installer
 - `claude`: Claude Code's native installer
-- `node-clis`: pnpm, Codex CLI, and Gemini CLI through mise-managed Node.js
+- `agent-harnesses`: Codex CLI, Pi Coding Agent, Antigravity CLI, and OpenCode
+  through their native installers
 
 Pass multiple extras as a comma-separated list, e.g. `--with docker,ollama`. Use
 `--with none` to explicitly select no extras in a non-interactive run.
@@ -157,7 +158,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,node-clis
+  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 ```

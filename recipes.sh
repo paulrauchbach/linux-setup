@@ -420,8 +420,8 @@ install_extras() {
 			claude)
 				try_install "Claude Code" install_claude
 				;;
-			node-clis)
-				try_install "Node CLIs" install_node_clis
+			agent-harnesses)
+				try_install "Agent harnesses" install_node_clis
 				;;
 		esac
 	done

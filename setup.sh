@@ -51,7 +51,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,node-clis
+  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 
@@ -105,11 +105,11 @@ normalize_extras() {
 				saw_none=1
 				continue
 				;;
-			docker | ollama | claude | node-clis)
+			docker | ollama | claude | agent-harnesses)
 				[ "$saw_none" -eq 0 ] || die "'none' cannot be combined with other extras."
 				;;
 			*)
-				die "Unknown extra '$extra'. Choose docker, ollama, claude, or node-clis."
+				die "Unknown extra '$extra'. Choose docker, ollama, claude, or agent-harnesses."
 				;;
 		esac
 
@@ -223,13 +223,13 @@ Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Ne
 	fi
 
 	if [ "$config_enabled" = "no" ] &&
-		{ has_extra "$extras" claude || has_extra "$extras" docker; }; then
+		{ has_extra "$extras" claude || has_extra "$extras" docker || has_extra "$extras" agent-harnesses; }; then
 		recap="$recap
 PATH: ensure \$HOME/.local/bin is available in your shell."
 	fi
 
 	if [ "$config_enabled" = "no" ] &&
-		{ [ "$tier" = "dev" ] || [ "$tier" = "desktop" ] || has_extra "$extras" node-clis; }; then
+		{ [ "$tier" = "dev" ] || [ "$tier" = "desktop" ]; }; then
 		recap="$recap
 mise: activate mise in your shell to use managed runtimes and Node CLIs."
 	fi

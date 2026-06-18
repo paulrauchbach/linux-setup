@@ -19,6 +19,33 @@ ensure_line() {
 	grep -qF "$line" "$file" || printf '%s\n' "$line" >>"$file"
 }
 
+backup_file_for_linux_setup() {
+	local file="$1"
+	local backup
+
+	[ -e "$file" ] || return 0
+
+	backup="${file}.linux-setup-backup.$(date +%Y%m%d%H%M%S)"
+	run_quiet "Backing up $file" cp -a "$file" "$backup"
+}
+
+install_config_file() {
+	local source_file="$1"
+	local target_file="$2"
+	local target_dir
+
+	target_dir="$(dirname "$target_file")"
+	mkdir -p "$target_dir"
+
+	if [ -f "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+		log_success "$target_file is already up to date"
+		return 0
+	fi
+
+	backup_file_for_linux_setup "$target_file"
+	run_quiet "Installing $target_file" cp "$source_file" "$target_file"
+}
+
 install_or_update_git_repo() {
 	local display_name="$1"
 	local repo_url="$2"
@@ -74,7 +101,7 @@ apply_tmux_config() {
 	local target_conf="$HOME/.tmux.conf"
 
 	[ -f "$source_conf" ] || die "tmux config not found at $source_conf."
-	run_quiet "Installing tmux config" cp "$source_conf" "$target_conf"
+	install_config_file "$source_conf" "$target_conf"
 }
 
 set_default_shell_to_zsh() {
@@ -132,11 +159,12 @@ apply_zsh_config() {
 		"https://github.com/zsh-users/zsh-syntax-highlighting.git" \
 		"$zsh_custom/plugins/zsh-syntax-highlighting"
 
-	run_quiet \
-		"Installing custom zsh theme" \
-		cp "$LINUX_SETUP_INSTALL_DIR/configs/custom.zsh-theme" "$zsh_custom/themes/custom.zsh-theme"
+	install_config_file \
+		"$LINUX_SETUP_INSTALL_DIR/configs/custom.zsh-theme" \
+		"$zsh_custom/themes/custom.zsh-theme"
 
 	touch "$zshrc"
+	backup_file_for_linux_setup "$zshrc"
 	ensure_line "$zshrc" "export ZSH=\"\$HOME/.oh-my-zsh\""
 	set_or_append_setting "$zshrc" "ZSH_THEME" '"custom"'
 
@@ -178,8 +206,7 @@ apply_alacritty_config() {
 	command -v alacritty >/dev/null 2>&1 || return 0
 	[ -f "$source_conf" ] || die "Alacritty config not found at $source_conf."
 
-	mkdir -p "$target_dir"
-	run_quiet "Installing Alacritty config" cp "$source_conf" "$target_dir/alacritty.toml"
+	install_config_file "$source_conf" "$target_dir/alacritty.toml"
 }
 
 apply_vscode_config() {
@@ -191,8 +218,7 @@ apply_vscode_config() {
 	command -v code >/dev/null 2>&1 || return 0
 
 	if [ -f "$source_settings" ]; then
-		mkdir -p "$target_dir"
-		run_quiet "Installing VS Code settings" cp "$source_settings" "$target_dir/settings.json"
+		install_config_file "$source_settings" "$target_dir/settings.json"
 	fi
 
 	if [ -f "$extensions_file" ]; then
@@ -228,6 +254,7 @@ apply_brave_policy() {
 	sed "s|__USER_NAME__|$user_name|g" "$source_policy" >"$rendered"
 
 	require_sudo
+	backup_system_file_for_linux_setup "$target_policy"
 	run_quiet "Installing Brave managed policy" \
 		sudo install -D -m 0644 -o root -g root "$rendered" "$target_policy"
 	rm -f "$rendered"
