@@ -301,8 +301,13 @@ ui_confirm_config() {
 ui_input() {
 	local label="$1"
 	local placeholder="$2"
+	local value="${3:-}"
 
-	gum input --header "$label" --placeholder "$placeholder" </dev/tty
+	if [ -n "$value" ]; then
+		gum input --header "$label" --placeholder "$placeholder" --value "$value" </dev/tty
+	else
+		gum input --header "$label" --placeholder "$placeholder" </dev/tty
+	fi
 }
 
 ui_box() {

@@ -226,13 +226,23 @@ format_configs() {
 prompt_nonempty() {
 	local label="$1"
 	local placeholder="$2"
+	local default_value="${3:-}"
 	local value=""
 
 	while [ -z "$value" ]; do
-		value="$(ui_input "$label" "$placeholder")" || die "Could not read $label."
+		value="$(ui_input "$label" "$placeholder" "$default_value")" || die "Could not read $label."
+		if [ -z "$value" ] && [ -n "$default_value" ]; then
+			value="$default_value"
+		fi
 	done
 
 	printf '%s\n' "$value"
+}
+
+current_git_config() {
+	local key="$1"
+
+	git config --global --get "$key" 2>/dev/null || true
 }
 
 show_preflight() {
@@ -508,13 +518,13 @@ main() {
 			if [ -z "$full_name" ]; then
 				has_interactive_tty ||
 					die "Git name is required when updating git config. Pass --name or set LINUX_SETUP_FULL_NAME."
-				full_name="$(prompt_nonempty "Full name" "Your Name")"
+				full_name="$(prompt_nonempty "Full name" "Your Name" "$(current_git_config user.name)")"
 			fi
 
 			if [ -z "$email" ]; then
 				has_interactive_tty ||
 					die "Git email is required when updating git config. Pass --email or set LINUX_SETUP_EMAIL."
-				email="$(prompt_nonempty "Email" "you@example.com")"
+				email="$(prompt_nonempty "Email" "you@example.com" "$(current_git_config user.email)")"
 			fi
 		fi
 
@@ -555,13 +565,13 @@ main() {
 		if [ -z "$full_name" ]; then
 			has_interactive_tty ||
 				die "Git name is required when config is enabled. Pass --name or set LINUX_SETUP_FULL_NAME."
-			full_name="$(prompt_nonempty "Full name" "Your Name")"
+			full_name="$(prompt_nonempty "Full name" "Your Name" "$(current_git_config user.name)")"
 		fi
 
 		if [ -z "$email" ]; then
 			has_interactive_tty ||
 				die "Git email is required when config is enabled. Pass --email or set LINUX_SETUP_EMAIL."
-			email="$(prompt_nonempty "Email" "you@example.com")"
+			email="$(prompt_nonempty "Email" "you@example.com" "$(current_git_config user.email)")"
 		fi
 	fi
 

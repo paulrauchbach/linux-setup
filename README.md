@@ -130,7 +130,9 @@ block that exports `~/.local/bin` on `PATH` and activates mise). With
 `--no-config`, no dotfile or login-shell setting is modified.
 
 When config is enabled, a git `--name` and `--email` are required (prompted for
-interactively, or supplied via flags / environment variables).
+interactively, or supplied via flags / environment variables). Interactive
+prompts use the current global `git config user.name` and `user.email` as
+editable defaults when those values are already set.
 
 ### Desktop config
 
