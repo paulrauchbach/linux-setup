@@ -111,6 +111,11 @@ Extras are independent of the selected tier and are chosen with `--with`:
   in `configs/`, but the startup script itself is generated once and left
   untracked so you can put machine-specific commands in it. Linger is enabled so
   it runs at boot without an interactive login.
+- `yeet`: installs the `yeet` command (to `~/.local/bin`), which stages all
+  changes, generates a commit message with an AI CLI, then commits and pushes.
+  The backend is selected with `YEET_CLI` (`codex` by default, or `claude` /
+  `agy`) and the model with `YEET_MODEL`. With shell config applied, a `yeet`
+  alias is added too. Needs one of those CLIs installed.
 
 Pass multiple extras as a comma-separated list, e.g. `--with docker,ollama`. Use
 `--with none` to explicitly select no extras in a non-interactive run.
@@ -162,7 +167,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses,startup-service
+  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses,startup-service,yeet
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 ```

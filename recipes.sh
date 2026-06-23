@@ -292,6 +292,21 @@ install_node_clis() {
 	return "$status"
 }
 
+install_yeet() {
+	local source_script="$LINUX_SETUP_INSTALL_DIR/yeet.sh"
+	local target="$HOME/.local/bin/yeet"
+
+	[ -f "$source_script" ] || die "yeet script not found at $source_script."
+
+	mkdir -p "$HOME/.local/bin"
+	run_quiet "Installing yeet" install -m 0755 "$source_script" "$target" || return 1
+
+	command -v codex >/dev/null 2>&1 ||
+		command -v claude >/dev/null 2>&1 ||
+		command -v agy >/dev/null 2>&1 ||
+		log_warn "yeet needs a backend CLI (codex, claude, or agy); install one or set YEET_CLI."
+}
+
 install_vscode() {
 	is_supported_platform || {
 		log_warn "Skipping VS Code on unsupported platform '$LINUX_SETUP_OS_ID'."
@@ -467,6 +482,9 @@ install_extras() {
 				;;
 			agent-harnesses)
 				try_install "Agent harnesses" install_node_clis
+				;;
+			yeet)
+				try_install "yeet" install_yeet
 				;;
 			startup-service)
 				try_install "Startup service" install_startup_service
