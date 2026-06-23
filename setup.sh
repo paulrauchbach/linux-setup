@@ -572,9 +572,7 @@ main() {
 		return 0
 	fi
 
-	if is_supported_platform; then
-		require_sudo
-	else
+	if ! is_supported_platform; then
 		log_warn "Unsupported platform '$LINUX_SETUP_OS_ID'. Debian/Ubuntu package steps will be skipped."
 	fi
 

@@ -52,7 +52,7 @@ install_or_update_git_repo() {
 	local destination="$3"
 
 	if [ -d "$destination/.git" ]; then
-		run_quiet "Updating $display_name" git -C "$destination" pull --ff-only --quiet
+		log_success "$display_name is already installed"
 	elif [ -e "$destination" ]; then
 		log_warn "Skipping $display_name install: $destination exists and is not a git checkout."
 	else
@@ -80,7 +80,7 @@ configured_omz_plugins() {
 		fi
 	done
 
-	if command -v mise >/dev/null 2>&1 && mise which python >/dev/null 2>&1; then
+	if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
 		plugins+=(python)
 	fi
 
@@ -224,8 +224,12 @@ apply_vscode_config() {
 			case "$extension" in
 				\#*) continue ;;
 			esac
+			if code --list-extensions | grep -qiFx "$extension"; then
+				log_success "VS Code extension $extension is already installed"
+				continue
+			fi
 			run_quiet "Installing VS Code extension $extension" \
-				code --install-extension "$extension" --force
+				code --install-extension "$extension"
 		done <"$extensions_file"
 	fi
 }

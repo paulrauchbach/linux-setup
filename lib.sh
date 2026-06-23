@@ -159,8 +159,82 @@ apt_update() {
 	return 0
 }
 
+apt_package_installed() {
+	local package="$1"
+
+	command -v dpkg-query >/dev/null 2>&1 &&
+		dpkg-query -W -f='${db:Status-Abbrev}' "$package" 2>/dev/null | grep -q '^ii '
+}
+
+apt_package_app_installed() {
+	local package="$1"
+	local commands=()
+	local command_name
+
+	case "$package" in
+		bat)
+			commands=(bat batcat)
+			;;
+		fd-find)
+			commands=(fd fdfind)
+			;;
+		fontconfig)
+			commands=(fc-list fc-cache)
+			;;
+		plocate)
+			commands=(plocate locate)
+			;;
+		ripgrep)
+			commands=(rg)
+			;;
+		docker-ce)
+			commands=(docker)
+			;;
+		docker-ce-cli)
+			commands=(docker)
+			;;
+		docker-compose-plugin)
+			commands=(docker)
+			;;
+		docker-buildx-plugin)
+			commands=(docker)
+			;;
+		containerd.io)
+			commands=(containerd)
+			;;
+		signal-desktop)
+			commands=(signal-desktop)
+			;;
+		spotify-client)
+			commands=(spotify)
+			;;
+		brave-origin)
+			commands=(brave brave-browser)
+			;;
+		code)
+			commands=(code)
+			;;
+		*)
+			commands=("$package")
+			;;
+	esac
+
+	if apt_package_installed "$package"; then
+		return 0
+	fi
+
+	for command_name in "${commands[@]}"; do
+		if command -v "$command_name" >/dev/null 2>&1; then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
 apt_install() {
 	local available=()
+	local installed=()
 	local missing=()
 	local package
 
@@ -169,9 +243,12 @@ apt_install() {
 		return 0
 	fi
 
-	apt_update || return 1
-
 	for package in "$@"; do
+		if apt_package_app_installed "$package"; then
+			installed+=("$package")
+			continue
+		fi
+
 		if apt-cache show "$package" >/dev/null 2>&1; then
 			available+=("$package")
 		else
@@ -179,7 +256,12 @@ apt_install() {
 		fi
 	done
 
+	if [ "${#installed[@]}" -gt 0 ]; then
+		log_success "Already installed: ${installed[*]}"
+	fi
+
 	if [ "${#available[@]}" -gt 0 ]; then
+		apt_update || return 1
 		run_quiet "Installing packages: ${available[*]}" sudo apt-get install -y -qq "${available[@]}" || return 1
 	fi
 
