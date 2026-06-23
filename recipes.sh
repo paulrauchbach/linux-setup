@@ -229,6 +229,51 @@ install_claude() {
 	run_remote_script "Claude Code" "https://claude.ai/install.sh"
 }
 
+install_startup_service() {
+	local config_dir="$HOME/.config/linux-setup"
+	local script_path="$config_dir/startup.sh"
+	local unit_source="$LINUX_SETUP_INSTALL_DIR/configs/linux-setup-startup.service"
+	local unit_target="$HOME/.config/systemd/user/linux-setup-startup.service"
+	local user_name
+
+	command -v systemctl >/dev/null 2>&1 || {
+		log_warn "systemctl is unavailable; skipping the startup service."
+		return 0
+	}
+
+	[ -f "$unit_source" ] || die "Startup service unit not found at $unit_source."
+
+	mkdir -p "$config_dir"
+
+	# The startup script is machine-specific and intentionally untracked, so it
+	# is generated once and never overwritten on re-runs.
+	if [ -f "$script_path" ]; then
+		log_success "$script_path already exists; leaving it untouched"
+	else
+		cat >"$script_path" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+# Machine-specific startup commands. Runs once on every boot via systemd.
+# This file is NOT tracked by linux-setup; edit it freely.
+EOF
+		log_success "Created $script_path"
+	fi
+	chmod +x "$script_path"
+
+	install_config_file "$unit_source" "$unit_target"
+
+	run_quiet "Reloading the systemd user manager" systemctl --user daemon-reload || return 1
+	run_quiet "Enabling the startup service" \
+		systemctl --user enable linux-setup-startup.service || return 1
+
+	# Linger lets the user service start at boot without an interactive login,
+	# matching the "runs on every system start" intent.
+	user_name="$(id -un)"
+	require_sudo
+	run_quiet "Enabling linger so the service runs at boot" \
+		sudo loginctl enable-linger "$user_name" || return 1
+}
+
 install_node_clis() {
 	local node_apps=(
 		pnpm
@@ -422,6 +467,9 @@ install_extras() {
 				;;
 			agent-harnesses)
 				try_install "Agent harnesses" install_node_clis
+				;;
+			startup-service)
+				try_install "Startup service" install_startup_service
 				;;
 		esac
 	done

@@ -51,7 +51,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses
+  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses,startup-service
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 
@@ -118,11 +118,11 @@ normalize_extras() {
 				saw_none=1
 				continue
 				;;
-			docker | ollama | claude | agent-harnesses)
+			docker | ollama | claude | agent-harnesses | startup-service)
 				[ "$saw_none" -eq 0 ] || die "'none' cannot be combined with other extras."
 				;;
 			*)
-				die "Unknown extra '$extra'. Choose docker, ollama, claude, or agent-harnesses."
+				die "Unknown extra '$extra'. Choose docker, ollama, claude, agent-harnesses, or startup-service."
 				;;
 		esac
 
@@ -284,6 +284,11 @@ Shell: run 'exec zsh' now; new login sessions use zsh by default."
 	if has_extra "$extras" docker; then
 		recap="$recap
 Docker: log out and back in for group membership to take effect."
+	fi
+
+	if has_extra "$extras" startup-service; then
+		recap="$recap
+Startup service: add commands to ~/.config/linux-setup/startup.sh; it runs on every boot. Check it with 'systemctl --user status linux-setup-startup'."
 	fi
 
 	if [ "$tier" = "desktop" ]; then

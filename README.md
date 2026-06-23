@@ -106,6 +106,11 @@ Extras are independent of the selected tier and are chosen with `--with`:
 - `claude`: Claude Code's native installer
 - `agent-harnesses`: Codex CLI, Pi Coding Agent, Antigravity CLI, and OpenCode
   through their native installers
+- `startup-service`: a systemd **user** service that runs
+  `~/.config/linux-setup/startup.sh` on every boot. The service unit is shipped
+  in `configs/`, but the startup script itself is generated once and left
+  untracked so you can put machine-specific commands in it. Linger is enabled so
+  it runs at boot without an interactive login.
 
 Pass multiple extras as a comma-separated list, e.g. `--with docker,ollama`. Use
 `--with none` to explicitly select no extras in a non-interactive run.
@@ -157,7 +162,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses
+  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses,startup-service
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 ```
