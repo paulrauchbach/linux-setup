@@ -72,7 +72,7 @@ generate_commit_message() {
 	esac
 }
 
-yeet_cli="${YEET_CLI:-codex}"
+yeet_cli="${YEET_CLI:-agy}"
 case "$yeet_cli" in
 codex) yeet_model="${YEET_MODEL:-gpt-5.4-mini}" ;;
 claude) yeet_model="${YEET_MODEL:-haiku}" ;;
