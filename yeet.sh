@@ -53,6 +53,13 @@ run_pre_commit_hook_if_present() {
 	pre_commit_hook_ran=1
 }
 
+stage_all_changes() {
+	git -C "$repo_root" add --all
+	if git -C "$repo_root" diff --cached --quiet --exit-code; then
+		die "no changes to commit"
+	fi
+}
+
 generate_commit_message() {
 	local err_file="$1"
 
@@ -97,19 +104,12 @@ prompt_file="$tmp_dir/prompt.txt"
 raw_message_file="$tmp_dir/raw-message.txt"
 message_file="$tmp_dir/message.txt"
 
-if git -C "$repo_root" diff --quiet --cached --exit-code &&
-	git -C "$repo_root" diff --quiet --exit-code &&
-	[ -z "$(git -C "$repo_root" ls-files --others --exclude-standard)" ]; then
-	die "no changes to commit"
-fi
-
-git -C "$repo_root" add --all
-
+stage_all_changes
 run_pre_commit_hook_if_present
 
-git -C "$repo_root" add --all
-
-git -C "$repo_root" diff --cached --quiet --exit-code && die "no staged changes to commit"
+if [ "$pre_commit_hook_ran" -eq 1 ]; then
+	stage_all_changes
+fi
 
 git -C "$repo_root" diff --cached --no-ext-diff --no-color >"$diff_file"
 
