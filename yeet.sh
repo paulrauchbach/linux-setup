@@ -49,15 +49,9 @@ run_pre_commit_hook_if_present() {
 	hook_path="$(git -C "$repo_root" rev-parse --git-path hooks/pre-commit)"
 	[ -x "$hook_path" ] || return 0
 
+	log "Running pre-commit hook"
 	(cd "$repo_root" && "$hook_path") >/dev/null 2>&1
 	pre_commit_hook_ran=1
-}
-
-stage_all_changes() {
-	git -C "$repo_root" add --all
-	if git -C "$repo_root" diff --cached --quiet --exit-code; then
-		die "no changes to commit"
-	fi
 }
 
 generate_commit_message() {
@@ -104,12 +98,19 @@ prompt_file="$tmp_dir/prompt.txt"
 raw_message_file="$tmp_dir/raw-message.txt"
 message_file="$tmp_dir/message.txt"
 
-stage_all_changes
+if git -C "$repo_root" diff --quiet --cached --exit-code &&
+	git -C "$repo_root" diff --quiet --exit-code &&
+	[ -z "$(git -C "$repo_root" ls-files --others --exclude-standard)" ]; then
+	die "no changes to commit"
+fi
+
+git -C "$repo_root" add --all
+
 run_pre_commit_hook_if_present
 
-if [ "$pre_commit_hook_ran" -eq 1 ]; then
-	stage_all_changes
-fi
+git -C "$repo_root" add --all
+
+git -C "$repo_root" diff --cached --quiet --exit-code && die "no staged changes to commit"
 
 git -C "$repo_root" diff --cached --no-ext-diff --no-color >"$diff_file"
 
