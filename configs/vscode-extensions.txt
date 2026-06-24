@@ -1,7 +1,48 @@
 # VS Code extensions installed by linux-setup when --config is enabled.
 # One extension id per line; blank lines and lines starting with # are ignored.
 # Edit this list to match your stack, then re-run `setup.sh desktop --config`.
-ms-python.python
-ms-azuretools.vscode-docker
+
+# Core language and formatting
+EditorConfig.EditorConfig
 esbenp.prettier-vscode
+dbaeumer.vscode-eslint
+stylelint.vscode-stylelint
+redhat.vscode-yaml
+mikestead.dotenv
+streetsidesoftware.code-spell-checker
+usernamehw.errorlens
+
+# Web apps, React, and TypeScript
+bradlc.vscode-tailwindcss
+formulahendry.auto-rename-tag
+christian-kohler.path-intellisense
+christian-kohler.npm-intellisense
+Prisma.prisma
+GraphQL.vscode-graphql
+unifiedjs.vscode-mdx
+vitest.explorer
+
+# Electron and desktop app packaging
+idleberg.electron-builder
+idleberg.nsis
+
+# Python apps
+ms-python.python
+ms-python.vscode-pylance
+ms-python.debugpy
+charliermarsh.ruff
+ms-python.mypy-type-checker
+ms-toolsai.jupyter
+
+# Containers, remotes, and GitHub
+ms-vscode-remote.remote-ssh
+ms-vscode-remote.remote-containers
+ms-azuretools.vscode-docker
+GitHub.vscode-github-actions
+GitHub.vscode-pull-request-github
 eamodio.gitlens
+
+# UI niceties
+PKief.material-icon-theme
+miguelsolorio.fluent-icons
+Catppuccin.catppuccin-vsc
