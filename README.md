@@ -17,6 +17,16 @@ The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the
 repository to `~/.local/share/linux-setup`, and forwards every argument to
 `setup.sh`. Re-running it updates the existing checkout in place.
 
+With zsh config applied, a `linux-setup` helper is also added to `.zshrc`. It
+runs the bootstrap command above and forwards arguments, so these are equivalent
+to the curl examples:
+
+```bash
+linux-setup
+linux-setup desktop --config
+linux-setup update-config vscode
+```
+
 Pass arguments after `--` to run non-interactively. Install the essentials tier
 without touching dotfiles:
 

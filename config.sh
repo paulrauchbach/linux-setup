@@ -192,6 +192,26 @@ fi
 if [ -x "$HOME/.local/bin/yeet" ]; then
   alias yeet="YEET_CLI=agy $HOME/.local/bin/yeet"
 fi
+
+linux-setup() {
+  local bootstrap_url="https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh"
+
+  if [ "$1" = "update-config" ]; then
+    shift
+
+    if [ "$#" -eq 0 ]; then
+      printf 'Usage: linux-setup update-config CONFIG[,CONFIG...]\n' >&2
+      return 2
+    fi
+
+    LINUX_SETUP_MODE=update-config \
+      LINUX_SETUP_UPDATE_CONFIGS="${(j:,:)@}" \
+      bash -c 'curl -fsSL "$1" | bash' _ "$bootstrap_url"
+    return
+  fi
+
+  bash -c 'curl -fsSL "$1" | bash -s -- "$@"' _ "$bootstrap_url" "$@"
+}
 # <<< linux-setup managed <<<
 EOF
 
