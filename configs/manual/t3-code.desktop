@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=T3 Code
+Exec=/home/paul/.local/bin/t3-code %U
+TryExec=/home/paul/.local/bin/t3-code
+Icon=/home/paul/Applications/t3-code-icon.png
+Terminal=false
+Categories=Utility;
+StartupWMClass=t3 code (alpha)
