@@ -46,13 +46,13 @@ install_config_file() {
 	run_quiet "Installing $target_file" cp "$source_file" "$target_file"
 }
 
-install_or_update_git_repo() {
+install_git_repo() {
 	local display_name="$1"
 	local repo_url="$2"
 	local destination="$3"
 
 	if [ -d "$destination/.git" ]; then
-		run_quiet "Updating $display_name" git -C "$destination" pull --ff-only --quiet
+		log_success "$display_name is already installed"
 	elif [ -e "$destination" ]; then
 		log_warn "Skipping $display_name install: $destination exists and is not a git checkout."
 	else
@@ -80,7 +80,7 @@ configured_omz_plugins() {
 		fi
 	done
 
-	if command -v mise >/dev/null 2>&1 && mise which python >/dev/null 2>&1; then
+	if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
 		plugins+=(python)
 	fi
 
@@ -144,17 +144,17 @@ apply_zsh_config() {
 
 	set_default_shell_to_zsh
 
-	install_or_update_git_repo \
+	install_git_repo \
 		"oh-my-zsh" \
 		"https://github.com/ohmyzsh/ohmyzsh.git" \
 		"$zsh_root"
 
 	mkdir -p "$zsh_custom/plugins" "$zsh_custom/themes"
-	install_or_update_git_repo \
+	install_git_repo \
 		"zsh-autosuggestions" \
 		"https://github.com/zsh-users/zsh-autosuggestions.git" \
 		"$zsh_custom/plugins/zsh-autosuggestions"
-	install_or_update_git_repo \
+	install_git_repo \
 		"zsh-syntax-highlighting" \
 		"https://github.com/zsh-users/zsh-syntax-highlighting.git" \
 		"$zsh_custom/plugins/zsh-syntax-highlighting"
@@ -233,6 +233,7 @@ apply_vscode_config() {
 	local extensions_file="$LINUX_SETUP_INSTALL_DIR/configs/vscode-extensions.txt"
 	local target_dir="$HOME/.config/Code/User"
 	local extension
+	local installed_extensions
 
 	command -v code >/dev/null 2>&1 || return 0
 
@@ -241,6 +242,7 @@ apply_vscode_config() {
 	fi
 
 	if [ -f "$extensions_file" ]; then
+		installed_extensions="$(code --list-extensions 2>/dev/null)"
 		while IFS= read -r extension; do
 			extension="${extension#"${extension%%[![:space:]]*}"}"
 			extension="${extension%"${extension##*[![:space:]]}"}"
@@ -248,8 +250,12 @@ apply_vscode_config() {
 			case "$extension" in
 				\#*) continue ;;
 			esac
+			if printf '%s\n' "$installed_extensions" | grep -qiFx "$extension"; then
+				log_success "VS Code extension $extension is already installed"
+				continue
+			fi
 			run_quiet "Installing VS Code extension $extension" \
-				code --install-extension "$extension" --force
+				code --install-extension "$extension"
 		done <"$extensions_file"
 	fi
 }

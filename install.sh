@@ -20,11 +20,28 @@ INSTALL_DIR="${LINUX_SETUP_INSTALL_DIR:-$HOME/.local/share/linux-setup}"
 printf '\nLinux Setup\n\n'
 
 if command -v apt-get >/dev/null 2>&1; then
-	command -v sudo >/dev/null 2>&1 || bootstrap_die "sudo is required to install bootstrap packages."
-	printf '==> Preparing bootstrap packages\n'
-	sudo -v
-	sudo apt-get -qq update
-	sudo apt-get install -y -qq ca-certificates curl git
+	missing_packages=()
+	for package_name in ca-certificates curl git; do
+		command_name="$package_name"
+		case "$package_name" in
+			ca-certificates)
+				command_name=""
+				;;
+		esac
+
+		if ! { [ -n "$command_name" ] && command -v "$command_name" >/dev/null 2>&1; } &&
+			! dpkg-query -W -f='${db:Status-Abbrev}' "$package_name" 2>/dev/null | grep -q '^ii '; then
+			missing_packages+=("$package_name")
+		fi
+	done
+
+	if [ "${#missing_packages[@]}" -gt 0 ]; then
+		command -v sudo >/dev/null 2>&1 || bootstrap_die "sudo is required to install bootstrap packages."
+		printf '==> Preparing bootstrap packages\n'
+		sudo -v
+		sudo apt-get -qq update
+		sudo apt-get install -y -qq "${missing_packages[@]}"
+	fi
 else
 	for command_name in curl git; do
 		command -v "$command_name" >/dev/null 2>&1 ||

@@ -3,7 +3,8 @@
 MISE_PREPARED=0
 
 install_gum() {
-	if command -v gum >/dev/null 2>&1; then
+	if apt_package_app_installed gum; then
+		log_success "gum is already installed"
 		return 0
 	fi
 
@@ -29,6 +30,11 @@ install_gum() {
 install_github_cli() {
 	local architecture
 
+	if apt_package_app_installed gh; then
+		log_success "GitHub CLI is already installed"
+		return 0
+	fi
+
 	is_supported_platform || {
 		log_warn "Skipping GitHub CLI on unsupported platform '$LINUX_SETUP_OS_ID'."
 		return 0
@@ -49,7 +55,8 @@ install_fastfetch() {
 	local package_file
 	local package_url
 
-	if command -v fastfetch >/dev/null 2>&1; then
+	if apt_package_app_installed fastfetch; then
+		log_success "Fastfetch is already installed"
 		return 0
 	fi
 
@@ -80,6 +87,7 @@ install_fastfetch() {
 	package_file="$(mktemp --suffix=.deb)"
 	package_url="https://github.com/fastfetch-cli/fastfetch/releases/latest/download/fastfetch-linux-${architecture}.deb"
 
+	require_sudo
 	if ! run_quiet "Downloading Fastfetch" curl -fsSL "$package_url" -o "$package_file" ||
 		! run_quiet "Installing Fastfetch" sudo apt-get install -y -qq "$package_file"; then
 		rm -f "$package_file"
@@ -90,6 +98,12 @@ install_fastfetch() {
 
 install_mise() {
 	if [ "$MISE_PREPARED" -eq 1 ]; then
+		return 0
+	fi
+
+	if apt_package_app_installed mise; then
+		log_success "mise is already installed"
+		MISE_PREPARED=1
 		return 0
 	fi
 
@@ -117,8 +131,24 @@ install_mise_defaults() {
 	local status=0
 
 	install_mise || return 1
-	run_quiet "Installing default Python with mise" mise use --global python@latest || status=1
-	run_quiet "Installing default Node.js with mise" mise use --global node@lts || status=1
+
+	if { command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; } &&
+		command -v node >/dev/null 2>&1; then
+		log_success "Python and Node.js are already installed"
+		return 0
+	fi
+
+	if command -v python >/dev/null 2>&1 || command -v python3 >/dev/null 2>&1; then
+		log_success "Python is already installed"
+	else
+		run_quiet "Installing default Python with mise" mise use --global python@latest || status=1
+	fi
+
+	if command -v node >/dev/null 2>&1; then
+		log_success "Node.js is already installed"
+	else
+		run_quiet "Installing default Node.js with mise" mise use --global node@lts || status=1
+	fi
 	return "$status"
 }
 
@@ -128,6 +158,11 @@ install_lazygit() {
 	local archive
 	local archive_url
 	local extract_dir
+
+	if apt_package_app_installed lazygit; then
+		log_success "lazygit is already installed"
+		return 0
+	fi
 
 	is_supported_platform || {
 		log_warn "Skipping lazygit on unsupported platform '$LINUX_SETUP_OS_ID'."
@@ -167,6 +202,7 @@ install_lazygit() {
 	extract_dir="$(mktemp -d)"
 	archive_url="https://github.com/jesseduffield/lazygit/releases/download/v${version}/lazygit_${version}_Linux_${architecture}.tar.gz"
 
+	require_sudo
 	if ! run_quiet "Downloading lazygit $version" curl -fsSL "$archive_url" -o "$archive" ||
 		! run_quiet "Extracting lazygit" tar -xzf "$archive" -C "$extract_dir" lazygit ||
 		! run_quiet "Installing lazygit" sudo install -m 0755 "$extract_dir/lazygit" /usr/local/bin/lazygit; then
@@ -178,6 +214,11 @@ install_lazygit() {
 }
 
 install_lazydocker() {
+	if command -v lazydocker >/dev/null 2>&1; then
+		log_success "lazydocker is already installed"
+		return 0
+	fi
+
 	run_remote_script \
 		"lazydocker" \
 		"https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh"
@@ -187,6 +228,11 @@ install_docker() {
 	local architecture
 	local docker_source
 	local user_name
+
+	if apt_package_app_installed docker-ce; then
+		log_success "Docker is already installed"
+		return 0
+	fi
 
 	is_supported_platform || {
 		log_warn "Skipping Docker on unsupported platform '$LINUX_SETUP_OS_ID'."
@@ -222,10 +268,20 @@ Signed-By: /etc/apt/keyrings/docker.asc"
 }
 
 install_ollama() {
+	if command -v ollama >/dev/null 2>&1; then
+		log_success "Ollama is already installed"
+		return 0
+	fi
+
 	run_remote_script "Ollama" "https://ollama.com/install.sh" sh
 }
 
 install_claude() {
+	if command -v claude >/dev/null 2>&1; then
+		log_success "Claude Code is already installed"
+		return 0
+	fi
+
 	run_remote_script "Claude Code" "https://claude.ai/install.sh"
 }
 
@@ -240,6 +296,12 @@ install_startup_service() {
 		log_warn "systemctl is unavailable; skipping the startup service."
 		return 0
 	}
+
+	if [ -f "$unit_target" ] &&
+		systemctl --user is-enabled --quiet linux-setup-startup.service; then
+		log_success "Startup service is already installed"
+		return 0
+	fi
 
 	[ -f "$unit_source" ] || die "Startup service unit not found at $unit_source."
 
@@ -276,18 +338,48 @@ EOF
 
 install_node_clis() {
 	local node_apps=(
-		pnpm
-		@openai/codex
-		@google/gemini-cli
+		"pnpm:pnpm"
+		"@openai/codex:codex"
+		"@google/gemini-cli:gemini"
 	)
 	local app
+	local command_name
+	local package_name
+	local missing_apps=()
 	local status=0
 
-	install_mise || return 1
-	run_quiet "Ensuring Node.js is available" mise use --global node@lts || return 1
-
 	for app in "${node_apps[@]}"; do
-		run_quiet "Installing $app" mise exec node@lts -- npm install --global "$app" || status=1
+		command_name="${app#*:}"
+		if command -v "$command_name" >/dev/null 2>&1; then
+			log_success "$command_name is already installed"
+			continue
+		fi
+		missing_apps+=("$app")
+	done
+
+	[ "${#missing_apps[@]}" -gt 0 ] || return 0
+
+	if ! command -v npm >/dev/null 2>&1; then
+		install_mise || return 1
+		if command -v node >/dev/null 2>&1; then
+			log_success "Node.js is already installed"
+		else
+			run_quiet "Ensuring Node.js is available" mise use --global node@lts || return 1
+		fi
+	fi
+
+	for app in "${missing_apps[@]}"; do
+		package_name="${app%%:*}"
+		command_name="${app#*:}"
+		if command -v "$command_name" >/dev/null 2>&1; then
+			log_success "$command_name is already installed"
+			continue
+		fi
+		if command -v npm >/dev/null 2>&1; then
+			run_quiet "Installing $package_name" npm install --global "$package_name" || status=1
+		else
+			run_quiet "Installing $package_name" mise exec node@lts -- npm install --global "$package_name" || status=1
+		fi
 	done
 	return "$status"
 }
@@ -308,6 +400,11 @@ install_yeet() {
 }
 
 install_vscode() {
+	if apt_package_app_installed code; then
+		log_success "Visual Studio Code is already installed"
+		return 0
+	fi
+
 	is_supported_platform || {
 		log_warn "Skipping VS Code on unsupported platform '$LINUX_SETUP_OS_ID'."
 		return 0
@@ -323,6 +420,11 @@ install_vscode() {
 }
 
 install_signal() {
+	if apt_package_app_installed signal-desktop; then
+		log_success "Signal is already installed"
+		return 0
+	fi
+
 	is_supported_platform || {
 		log_warn "Skipping Signal on unsupported platform '$LINUX_SETUP_OS_ID'."
 		return 0
@@ -338,6 +440,11 @@ install_signal() {
 }
 
 install_spotify() {
+	if apt_package_app_installed spotify-client; then
+		log_success "Spotify is already installed"
+		return 0
+	fi
+
 	is_supported_platform || {
 		log_warn "Skipping Spotify on unsupported platform '$LINUX_SETUP_OS_ID'."
 		return 0
@@ -357,6 +464,11 @@ install_spotify() {
 
 install_thunderbird() {
 	local pref_tmp
+
+	if apt_package_app_installed thunderbird; then
+		log_success "Thunderbird is already installed"
+		return 0
+	fi
 
 	is_supported_platform || {
 		log_warn "Skipping Thunderbird on unsupported platform '$LINUX_SETUP_OS_ID'."
@@ -396,6 +508,11 @@ install_brave() {
 	local architecture
 	local brave_source
 
+	if apt_package_app_installed brave-origin; then
+		log_success "Brave Origin is already installed"
+		return 0
+	fi
+
 	is_supported_platform || {
 		log_warn "Skipping Brave Origin on unsupported platform '$LINUX_SETUP_OS_ID'."
 		return 0
@@ -426,6 +543,7 @@ install_nerd_font() {
 	local archive_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${font_name}.zip"
 
 	if command -v fc-list >/dev/null 2>&1 && fc-list | grep -qiF "$font_label"; then
+		log_success "$font_label is already installed"
 		return 0
 	fi
 
