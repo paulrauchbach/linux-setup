@@ -1,7 +1,6 @@
 [Unit]
 Description=Personal startup script (linux-setup)
-After=network-online.target
-Wants=network-online.target
+After=graphical-session.target
 
 [Service]
 Type=oneshot
@@ -9,4 +8,4 @@ RemainAfterExit=yes
 ExecStart=%h/.config/linux-setup/startup.sh
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target
