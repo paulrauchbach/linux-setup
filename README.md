@@ -76,7 +76,9 @@ package, including on Ubuntu 24.04.
 Everything in essentials, plus:
 
 - mise from its signed apt repository
-- global `python@latest` and `node@lts` runtimes
+- global `python@latest`, `node@lts`, and `go@latest` runtimes
+- Go build tools managed by mise: `gopls`, `dlv`, `staticcheck`, and
+  `govulncheck`
 - pipx and lazygit
 
 ### desktop

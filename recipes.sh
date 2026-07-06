@@ -114,11 +114,25 @@ install_mise() {
 }
 
 install_mise_defaults() {
+	local go_tools=(
+		golang.org/x/tools/gopls
+		github.com/go-delve/delve/cmd/dlv
+		honnef.co/go/tools/cmd/staticcheck
+		golang.org/x/vuln/cmd/govulncheck
+	)
+	local tool
 	local status=0
 
 	install_mise || return 1
 	run_quiet "Installing default Python with mise" mise use --global python@latest || status=1
 	run_quiet "Installing default Node.js with mise" mise use --global node@lts || status=1
+	if run_quiet "Installing default Go with mise" mise use --global go@latest; then
+		for tool in "${go_tools[@]}"; do
+			run_quiet "Installing Go tool ${tool##*/} with mise" mise use --global "go:$tool@latest" || status=1
+		done
+	else
+		status=1
+	fi
 	return "$status"
 }
 
