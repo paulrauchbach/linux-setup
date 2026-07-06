@@ -119,9 +119,19 @@ apply_git_config() {
 apply_tmux_config() {
 	local source_conf="$LINUX_SETUP_INSTALL_DIR/configs/tmux.conf"
 	local target_conf="$HOME/.tmux.conf"
+	local tpm_dir="$HOME/.tmux/plugins/tpm"
 
 	[ -f "$source_conf" ] || die "tmux config not found at $source_conf."
 	install_config_file "$source_conf" "$target_conf"
+
+	install_or_update_git_repo \
+		"tmux plugin manager" \
+		"https://github.com/tmux-plugins/tpm.git" \
+		"$tpm_dir"
+
+	if [ -x "$tpm_dir/bin/install_plugins" ]; then
+		run_quiet "Installing tmux plugins" "$tpm_dir/bin/install_plugins"
+	fi
 }
 
 set_default_shell_to_zsh() {

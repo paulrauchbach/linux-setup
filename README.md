@@ -144,6 +144,10 @@ bundled theme, tmux, the supplied git identity, and shared agent config. It sets
 zsh as the default login shell and loads Oh My Zsh from `.zshrc` (managing a
 clearly-delimited block that exports `~/.local/bin` on `PATH` and activates
 mise). With `--no-config`, no dotfile or login-shell setting is modified.
+The tmux config uses a Catppuccin Mocha-inspired native status line, truecolor,
+OSC 52 clipboard forwarding, `Ctrl-a` as the primary prefix (`Ctrl-b` still
+sends the prefix), current-directory splits, and TPM-managed plugins for sane
+defaults, clipboard integration, and session restore.
 
 When config is enabled, a git `--name` and `--email` are required (prompted for
 interactively, or supplied via flags / environment variables). Interactive
