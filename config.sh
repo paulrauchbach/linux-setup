@@ -382,6 +382,7 @@ apply_gnome_tray_config() {
 	local extension_dir
 	local extension_path
 	local extension_uuid
+	local extension_uuid_lower
 	local enabled=0
 
 	command -v gnome-extensions >/dev/null 2>&1 || return 0
@@ -408,9 +409,10 @@ apply_gnome_tray_config() {
 		for extension_path in "$extension_dir"/*; do
 			[ -d "$extension_path" ] || continue
 			extension_uuid="$(basename "$extension_path")"
+			extension_uuid_lower="${extension_uuid,,}"
 
-			case "$extension_uuid" in
-				*appindicator* | *AppIndicator* | *indicator* | *Indicator* | *kstatus* | *KStatus* | ubuntu-appindicators@ubuntu.com)
+			case "$extension_uuid_lower" in
+				*indicator* | *kstatus*)
 					if gnome-extensions info "$extension_uuid" 2>/dev/null |
 						grep -qiE 'appindicator|kstatusnotifier|tray support|indicator'; then
 						run_quiet "Enabling GNOME tray extension $extension_uuid" \
