@@ -32,7 +32,6 @@
   "prettier.useEditorConfig": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.typeCheckingMode": "basic",
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "ruff.nativeServer": "on",
   "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font'",
   "telemetry.telemetryLevel": "off",
