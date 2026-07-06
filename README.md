@@ -169,8 +169,9 @@ if its app is not installed):
   force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
   site-search shortcuts.
 - **GNOME tray icons** — enables the packaged AppIndicator/KStatusNotifier
-  extension when GNOME Shell is available. If icons do not appear immediately,
-  log out and back in, then run `linux-setup update-config gnome-tray`.
+  extension when GNOME Shell is available and places 16px tray icons on the right
+  side of the top bar. If icons do not appear immediately, log out and back in,
+  then run `linux-setup update-config gnome-tray`.
 
 After installing Brave Origin, restart it and verify the policy at
 `brave://policy`. The Brave-specific keys are best-effort and should be checked
