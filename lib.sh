@@ -287,7 +287,7 @@ ui_choose_configs() {
 	gum choose \
 		--no-limit \
 		--header "Choose configs to update (space to select)" \
-		zsh tmux git alacritty vscode brave </dev/tty
+		zsh tmux git alacritty vscode brave agents </dev/tty
 }
 
 ui_confirm_config() {

@@ -1,0 +1,14 @@
+{
+  "model": "claude-fable-5[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/paul/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {},
+  "effortLevel": "xhigh",
+  "promptSuggestionEnabled": false,
+  "awaySummaryEnabled": false,
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "autoCompactEnabled": false
+}

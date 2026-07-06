@@ -89,6 +89,10 @@ Everything in dev, plus a **desktop GUI layer**:
   repository
 - **Thunderbird**, **VLC**, **KeePassXC**, and **Alacritty** — from the distro
   apt repository
+- **GNOME AppIndicator tray support** — enables tray/status icons in the top bar
+  for apps and services such as Handy when they expose an AppIndicator,
+  KStatusNotifierItem, or legacy tray icon, and installs the Ayatana
+  AppIndicator runtime library for GTK-style apps
 - **JetBrainsMono Nerd Font** — fetched from the
   [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) release and installed
   into `~/.local/share/fonts`
@@ -134,10 +138,10 @@ Interactive runs show a Gum checklist where zero or more extras can be selected.
 ## Personal config
 
 With `--config`, the installer also installs and configures zsh, oh-my-zsh, the
-bundled theme, tmux, and the supplied git identity. It sets zsh as the default
-login shell and loads Oh My Zsh from `.zshrc` (managing a clearly-delimited
-block that exports `~/.local/bin` on `PATH` and activates mise). With
-`--no-config`, no dotfile or login-shell setting is modified.
+bundled theme, tmux, the supplied git identity, and shared agent config. It sets
+zsh as the default login shell and loads Oh My Zsh from `.zshrc` (managing a
+clearly-delimited block that exports `~/.local/bin` on `PATH` and activates
+mise). With `--no-config`, no dotfile or login-shell setting is modified.
 
 When config is enabled, a git `--name` and `--email` are required (prompted for
 interactively, or supplied via flags / environment variables). Interactive
@@ -162,6 +166,9 @@ if its app is not installed):
   prompts for each download location, sets DuckDuckGo as default search,
   force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
   site-search shortcuts.
+- **GNOME tray icons** — enables the packaged AppIndicator/KStatusNotifier
+  extension when GNOME Shell is available. If icons do not appear immediately,
+  log out and back in, then run `linux-setup update-config gnome-tray`.
 
 After installing Brave Origin, restart it and verify the policy at
 `brave://policy`. The Brave-specific keys are best-effort and should be checked
@@ -169,13 +176,28 @@ there in a clean VM — adjust any that the build flags as unrecognized. Chromiu
 has no equivalent of Firefox's `SearchEngines.Remove`, so bundled search
 providers are not removed.
 
+### Agent config
+
+Agent files are stored under `configs/agents/`:
+
+- `configs/agents/skills/` is the shared custom skill source and is installed to
+  both `~/.codex/skills` and `~/.claude/skills`.
+- `configs/agents/codex/config.toml` is installed to `~/.codex/config.toml`.
+- `configs/agents/claude/settings.json` is installed to `~/.claude/settings.json`.
+- `configs/agents/claude/statusline-command.sh` is installed to
+  `~/.claude/statusline-command.sh`.
+
+Existing target skill directories are backed up before each shared skill is
+linked into them. The install replaces only skill paths that collide with
+`configs/agents/skills/`, so agent-managed system skills are left alone.
+
 ## CLI reference
 
 ```
 Usage: setup.sh [essentials|dev|desktop] [options]
 
 Options:
-  --config              Apply personal shell, tmux, and git config
+  --config              Apply personal shell, tmux, git, app, and agent config
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
@@ -225,6 +247,12 @@ When run from a terminal with no values supplied, the installer:
 
 A non-interactive run (piped input, no TTY) requires at least a tier and a
 config choice up front, since there is nowhere to prompt.
+
+Refresh only agent files from an existing checkout:
+
+```bash
+linux-setup update-config agents
+```
 
 ## Local development
 

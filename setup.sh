@@ -38,7 +38,9 @@ DEV_PACKAGES=(
 # own installers in install_desktop.
 DESKTOP_PACKAGES=(
 	alacritty
+	gnome-shell-extension-appindicator
 	keepassxc
+	libayatana-appindicator3-1
 	vlc
 )
 
@@ -47,7 +49,7 @@ usage() {
 Usage: setup.sh [essentials|dev|desktop] [options]
 
 Options:
-  --config              Apply personal shell, tmux, and git config
+  --config              Apply personal shell, tmux, git, app, and agent config
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
@@ -152,10 +154,10 @@ normalize_configs() {
 		[ -n "$config" ] || continue
 
 		case "$config" in
-			zsh | tmux | git | alacritty | vscode | brave)
+			zsh | tmux | git | alacritty | vscode | brave | gnome-tray | agents)
 				;;
 			*)
-				die "Unknown config '$config'. Choose zsh, tmux, git, alacritty, vscode, or brave."
+				die "Unknown config '$config'. Choose zsh, tmux, git, alacritty, vscode, brave, gnome-tray, or agents."
 				;;
 		esac
 
@@ -304,6 +306,7 @@ Startup service: add commands to ~/.config/linux-setup/startup.sh; it runs on ev
 	if [ "$tier" = "desktop" ]; then
 		recap="$recap
 Brave Origin: complete the one-time free activation on first launch, then verify the managed policy at brave://policy.
+Tray icons: log out and back in if GNOME top-bar status icons do not appear immediately.
 Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Nerd Font."
 	fi
 

@@ -46,6 +46,26 @@ install_config_file() {
 	run_quiet "Installing $target_file" cp "$source_file" "$target_file"
 }
 
+install_shared_skills_dir() {
+	local source_dir="$1"
+	local target_dir="$2"
+	local source_path
+	local target_path
+
+	[ -d "$source_dir" ] || die "Config directory not found at $source_dir."
+	mkdir -p "$target_dir"
+
+	backup_file_for_linux_setup "$target_dir"
+
+	for source_path in "$source_dir"/*; do
+		[ -e "$source_path" ] || continue
+		target_path="$target_dir/$(basename "$source_path")"
+		# shellcheck disable=SC2016
+		run_quiet "Linking $target_path" \
+			sh -c 'rm -rf "$1" && ln -s "$2" "$1"' _ "$target_path" "$source_path"
+	done
+}
+
 install_or_update_git_repo() {
 	local display_name="$1"
 	local repo_url="$2"
@@ -279,6 +299,62 @@ apply_brave_policy() {
 	rm -f "$rendered"
 }
 
+apply_gnome_tray_config() {
+	local extension_dirs=(
+		"$HOME/.local/share/gnome-shell/extensions"
+		"/usr/share/gnome-shell/extensions"
+	)
+	local extension_dir
+	local extension_path
+	local extension_uuid
+	local enabled=0
+
+	command -v gnome-extensions >/dev/null 2>&1 || return 0
+
+	for extension_dir in "${extension_dirs[@]}"; do
+		[ -d "$extension_dir" ] || continue
+
+		for extension_path in "$extension_dir"/*; do
+			[ -d "$extension_path" ] || continue
+			extension_uuid="$(basename "$extension_path")"
+
+			case "$extension_uuid" in
+				*appindicator* | *AppIndicator* | *indicator* | *Indicator* | *kstatus* | *KStatus* | ubuntu-appindicators@ubuntu.com)
+					if gnome-extensions info "$extension_uuid" 2>/dev/null |
+						grep -qiE 'appindicator|kstatusnotifier|tray support|indicator'; then
+						run_quiet "Enabling GNOME tray extension $extension_uuid" \
+							gnome-extensions enable "$extension_uuid" || true
+						enabled=1
+					fi
+					;;
+			esac
+		done
+	done
+
+	if [ "$enabled" -eq 0 ]; then
+		log_warn "GNOME AppIndicator extension was not found; install gnome-shell-extension-appindicator and re-run 'linux-setup update-config gnome-tray'."
+	fi
+}
+
+apply_agents_config() {
+	local agents_dir="$LINUX_SETUP_INSTALL_DIR/configs/agents"
+	local shared_skills_dir="$agents_dir/skills"
+
+	install_config_file \
+		"$agents_dir/codex/config.toml" \
+		"$HOME/.codex/config.toml"
+
+	install_config_file \
+		"$agents_dir/claude/settings.json" \
+		"$HOME/.claude/settings.json"
+	install_config_file \
+		"$agents_dir/claude/statusline-command.sh" \
+		"$HOME/.claude/statusline-command.sh"
+
+	install_shared_skills_dir "$shared_skills_dir" "$HOME/.codex/skills"
+	install_shared_skills_dir "$shared_skills_dir" "$HOME/.claude/skills"
+}
+
 apply_personal_config() {
 	local full_name="$1"
 	local email="$2"
@@ -289,6 +365,8 @@ apply_personal_config() {
 	apply_alacritty_config
 	apply_vscode_config
 	apply_brave_policy
+	apply_gnome_tray_config
+	apply_agents_config
 }
 
 apply_selected_config() {
@@ -318,6 +396,12 @@ apply_selected_config() {
 				;;
 			brave)
 				apply_brave_policy
+				;;
+			gnome-tray)
+				apply_gnome_tray_config
+				;;
+			agents)
+				apply_agents_config
 				;;
 			*)
 				die "Unknown config '$config'."
