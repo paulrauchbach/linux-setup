@@ -309,6 +309,66 @@ apply_brave_policy() {
 	rm -f "$rendered"
 }
 
+apply_brave_desktop_integration() {
+	local target_dir="$HOME/.local/share/applications"
+	local entries=(
+		"/usr/share/applications/brave-origin.desktop:brave-origin"
+		"/usr/share/applications/com.brave.Origin.desktop:brave-origin"
+		"/usr/share/applications/brave-origin-beta.desktop:brave-origin-beta"
+		"/usr/share/applications/com.brave.Origin.beta.desktop:brave-origin-beta"
+	)
+	local entry
+	local source_entry
+	local wm_class
+	local rendered
+
+	if ! command -v brave-origin-stable >/dev/null 2>&1 &&
+		! command -v brave-origin-beta >/dev/null 2>&1 &&
+		! { command -v dpkg >/dev/null 2>&1 && dpkg -s brave-origin >/dev/null 2>&1; }; then
+		return 0
+	fi
+
+	mkdir -p "$target_dir"
+
+	for entry in "${entries[@]}"; do
+		source_entry="${entry%%:*}"
+		wm_class="${entry#*:}"
+
+		[ -f "$source_entry" ] || continue
+
+		rendered="$(mktemp)"
+		awk -v wm_class="$wm_class" '
+			BEGIN { in_entry = 0; inserted = 0 }
+			/^\[Desktop Entry\]$/ { in_entry = 1 }
+			in_entry && /^StartupWMClass=/ {
+				print "StartupWMClass=" wm_class
+				inserted = 1
+				next
+			}
+			in_entry && /^Type=Application$/ && !inserted {
+				print
+				print "StartupWMClass=" wm_class
+				inserted = 1
+				next
+			}
+			{ print }
+			END {
+				if (!inserted) {
+					print "StartupWMClass=" wm_class
+				}
+			}
+		' "$source_entry" >"$rendered"
+
+		install_config_file "$rendered" "$target_dir/$(basename "$source_entry")"
+		rm -f "$rendered"
+	done
+}
+
+apply_brave_config() {
+	apply_brave_policy
+	apply_brave_desktop_integration
+}
+
 apply_gnome_tray_config() {
 	local extension_dirs=(
 		"$HOME/.local/share/gnome-shell/extensions"
@@ -395,7 +455,7 @@ apply_personal_config() {
 	apply_git_config "$full_name" "$email"
 	apply_alacritty_config
 	apply_vscode_config
-	apply_brave_policy
+	apply_brave_config
 	apply_gnome_tray_config
 	apply_agents_config
 }
@@ -426,7 +486,7 @@ apply_selected_config() {
 				apply_vscode_config
 				;;
 			brave)
-				apply_brave_policy
+				apply_brave_config
 				;;
 			gnome-tray)
 				apply_gnome_tray_config

@@ -171,7 +171,9 @@ if its app is not installed):
   session, disables sync/metrics/password-manager/News/Rewards/Wallet/VPN/Talk/Tor,
   prompts for each download location, sets DuckDuckGo as default search,
   force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
-  site-search shortcuts.
+  site-search shortcuts. It also installs user-local Brave Origin desktop-entry
+  overrides with `StartupWMClass` values that match Brave's X11 window class, so
+  GNOME can associate running browser windows with the correct Alt+Tab app.
 - **GNOME tray icons** — enables the packaged AppIndicator/KStatusNotifier
   extension when GNOME Shell is available and places 16px tray icons on the right
   side of the top bar. If icons do not appear immediately, log out and back in,
