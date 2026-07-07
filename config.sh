@@ -215,6 +215,12 @@ apply_zsh_config() {
 # >>> linux-setup managed >>>
 export PATH="$HOME/.local/bin:$PATH"
 
+alias cat="bat"
+
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
+
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
@@ -240,7 +246,7 @@ linux-setup() {
     return
   fi
 
-  bash -c 'curl -fsSL "$1" | bash -s -- "$@"' _ "$bootstrap_url" "$@"
+  bash -c 'bootstrap_url="$1"; shift; curl -fsSL "$bootstrap_url" | bash -s -- "$@"' _ "$bootstrap_url" "$@"
 }
 # <<< linux-setup managed <<<
 EOF
