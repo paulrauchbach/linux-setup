@@ -11,7 +11,6 @@ DESKTOP_DIR="${DESKTOP_DIR:-$HOME/.local/share/applications}"
 APPIMAGE_LINK="${T3_CODE_APPIMAGE:-$APPLICATIONS_DIR/T3-Code-x86_64.AppImage}"
 ICON_TARGET="${T3_CODE_ICON:-$APPLICATIONS_DIR/t3-code-icon.png}"
 BUILD_APP="${BUILD_APP:-yes}"
-INSTALL_DEPS="${INSTALL_DEPS:-yes}"
 
 usage() {
 	cat <<'EOF'
@@ -22,7 +21,6 @@ user-local t3-code wrapper and desktop entry.
 
 Options:
   --no-build       Reinstall wrapper, icon, and desktop entry without rebuilding
-  --no-install     Skip pnpm install before building
   -h, --help       Show this help
 
 Environment:
@@ -45,9 +43,6 @@ while [ "$#" -gt 0 ]; do
 	case "$1" in
 		--no-build)
 			BUILD_APP="no"
-			;;
-		--no-install)
-			INSTALL_DEPS="no"
 			;;
 		-h | --help)
 			usage
@@ -82,10 +77,7 @@ if [ "$BUILD_APP" = "yes" ]; then
 	log_step "Building T3 Code from $T3_CODE_REPO"
 	cd "$T3_CODE_REPO"
 
-	if [ "$INSTALL_DEPS" = "yes" ]; then
-		pnpm install --frozen-lockfile
-	fi
-
+	pnpm install --frozen-lockfile
 	pnpm run dist:desktop:linux
 fi
 
