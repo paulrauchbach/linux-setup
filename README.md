@@ -169,7 +169,7 @@ if its app is not installed):
   username into the download directory) and installs it as a root-owned managed
   policy at `/etc/brave/policies/managed/linux-setup.json`. It restores the last
   session, disables sync/metrics/password-manager/News/Rewards/Wallet/VPN/Talk/Tor,
-  prompts for each download location, sets DuckDuckGo as default search,
+  always shows the bookmarks bar, prompts for each download location, sets DuckDuckGo as default search,
   force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
   site-search shortcuts. It also installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so

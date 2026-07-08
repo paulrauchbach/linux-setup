@@ -12,7 +12,7 @@
   "SpellcheckLanguage": ["de", "en-US"],
   "PromptForDownloadLocation": true,
   "DownloadDirectory": "/home/__USER_NAME__/Downloads",
-  "BookmarkBarEnabled": false,
+  "BookmarkBarEnabled": true,
   "DefaultSearchProviderEnabled": true,
   "DefaultSearchProviderName": "DuckDuckGo",
   "DefaultSearchProviderKeyword": "ddg",
