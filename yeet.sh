@@ -28,6 +28,16 @@ trim_commit_message() {
 		sed -e '/./,$!d' >"$output_file"
 }
 
+validate_commit_message() {
+	local message_file="$1"
+
+	[ -s "$message_file" ] || die "$yeet_cli did not generate a commit message"
+
+	if grep -qi '^You are currently using \*\*Gemini .*Flash\*\*\.' "$message_file"; then
+		die "$yeet_cli returned model status instead of a commit message"
+	fi
+}
+
 push_current_branch() {
 	local branch
 
@@ -66,9 +76,15 @@ generate_commit_message() {
 			--output-last-message "$raw_message_file" \
 			- <"$prompt_file" >/dev/null 2>"$err_file"
 		;;
-	claude | agy)
-		(cd "$repo_root" && "$yeet_cli" --print --model "$yeet_model") \
+	claude)
+		(cd "$repo_root" && claude --print --model "$yeet_model") \
 			<"$prompt_file" >"$raw_message_file" 2>"$err_file"
+		;;
+	agy)
+		local prompt_text
+		prompt_text="$(<"$prompt_file")"
+		(cd "$repo_root" && agy --print --model "$yeet_model" "$prompt_text") \
+			>"$raw_message_file" 2>"$err_file"
 		;;
 	esac
 }
@@ -145,7 +161,7 @@ if ! generate_commit_message "$cli_err_file"; then
 fi
 
 trim_commit_message "$raw_message_file" "$message_file"
-[ -s "$message_file" ] || die "Codex did not generate a commit message"
+validate_commit_message "$message_file"
 
 if [ "$pre_commit_hook_ran" -eq 1 ]; then
 	git -C "$repo_root" commit --no-verify -F "$message_file" >/dev/null
