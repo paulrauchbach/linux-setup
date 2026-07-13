@@ -53,7 +53,7 @@ Options:
   --no-config           Install tools without touching dotfiles
   --name NAME           Git user.name (used with --config)
   --email EMAIL         Git user.email (used with --config)
-  --with EXTRAS         Comma-separated: docker,ollama,claude,agent-harnesses,startup-service,yeet
+  --with EXTRAS         Comma-separated: docker,ollama,agent-harnesses,startup-service,yeet
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
 
@@ -120,11 +120,11 @@ normalize_extras() {
 				saw_none=1
 				continue
 				;;
-			docker | ollama | claude | agent-harnesses | startup-service | yeet)
+			docker | ollama | agent-harnesses | startup-service | yeet)
 				[ "$saw_none" -eq 0 ] || die "'none' cannot be combined with other extras."
 				;;
 			*)
-				die "Unknown extra '$extra'. Choose docker, ollama, claude, agent-harnesses, startup-service, or yeet."
+				die "Unknown extra '$extra'. Choose docker, ollama, agent-harnesses, startup-service, or yeet."
 				;;
 		esac
 
@@ -311,7 +311,7 @@ Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Ne
 	fi
 
 	if [ "$config_enabled" = "no" ] &&
-		{ has_extra "$extras" claude || has_extra "$extras" docker || has_extra "$extras" agent-harnesses || has_extra "$extras" yeet; }; then
+		{ has_extra "$extras" docker || has_extra "$extras" agent-harnesses || has_extra "$extras" yeet; }; then
 		recap="$recap
 PATH: ensure \$HOME/.local/bin is available in your shell."
 	fi

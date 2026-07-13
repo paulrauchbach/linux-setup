@@ -1,0 +1,91 @@
+<domain type='kvm'>
+  <name>win11-stripped</name>
+  <uuid>349e41cd-da96-417a-83ae-722283771637</uuid>
+  <metadata>
+    <libosinfo:libosinfo xmlns:libosinfo="http://libosinfo.org/xmlns/libvirt/domain/1.0">
+      <libosinfo:os id="http://microsoft.com/win/11"/>
+    </libosinfo:libosinfo>
+  </metadata>
+  <memory unit='MiB'>8192</memory>
+  <currentMemory unit='MiB'>8192</currentMemory>
+  <vcpu placement='static'>4</vcpu>
+  <os firmware='efi'>
+    <type arch='x86_64' machine='pc-q35-10.0'>hvm</type>
+    <firmware>
+      <feature enabled='yes' name='enrolled-keys'/>
+      <feature enabled='yes' name='secure-boot'/>
+    </firmware>
+    <loader secure='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv mode='custom'>
+      <relaxed state='on'/>
+      <vapic state='on'/>
+      <spinlocks state='on' retries='8191'/>
+    </hyperv>
+    <vmport state='off'/>
+    <smm state='on'/>
+  </features>
+  <cpu mode='host-passthrough' check='none' migratable='on'/>
+  <clock offset='localtime'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+    <timer name='hypervclock' present='yes'/>
+  </clock>
+  <pm>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' discard='unmap'/>
+      <source file='/var/lib/libvirt/images/win11-stripped.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='2'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <target dev='sda' bus='sata'/>
+      <readonly/>
+      <boot order='1'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='/home/paul/Downloads/virtio-win.iso'/>
+      <target dev='sdb' bus='sata'/>
+      <readonly/>
+    </disk>
+    <controller type='usb' model='qemu-xhci' ports='15'/>
+    <controller type='pci' model='pcie-root'/>
+    <controller type='sata' index='0'/>
+    <interface type='network'>
+      <source network='default'/>
+      <model type='virtio'/>
+    </interface>
+    <input type='tablet' bus='usb'/>
+    <input type='keyboard' bus='usb'/>
+    <graphics type='spice' autoport='yes'>
+      <listen type='none'/>
+      <image compression='off'/>
+    </graphics>
+    <sound model='ich9'/>
+    <audio id='1' type='spice'/>
+    <video>
+      <model type='virtio'/>
+    </video>
+    <channel type='spicevmc'>
+      <target type='virtio' name='com.redhat.spice.0'/>
+    </channel>
+    <tpm model='tpm-crb'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+    <rng model='virtio'>
+      <backend model='random'>/dev/urandom</backend>
+    </rng>
+    <memballoon model='virtio'/>
+  </devices>
+</domain>

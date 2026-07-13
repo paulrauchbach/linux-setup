@@ -280,7 +280,7 @@ ui_choose_extras() {
 	gum choose \
 		--no-limit \
 		--header "Choose optional extras (space to select)" \
-		docker ollama claude agent-harnesses startup-service yeet </dev/tty
+		docker ollama agent-harnesses startup-service yeet </dev/tty
 }
 
 ui_choose_configs() {

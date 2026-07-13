@@ -297,6 +297,10 @@ install_node_clis() {
 	local app
 	local status=0
 
+	# Claude Code is an agent harness too; keep it in this group so selecting
+	# agent-harnesses installs the complete set without a separate extra.
+	install_claude || status=1
+
 	install_mise || return 1
 	run_quiet "Ensuring Node.js is available" mise use --global node@lts || return 1
 
@@ -490,9 +494,6 @@ install_extras() {
 				;;
 			ollama)
 				try_install "Ollama" install_ollama
-				;;
-			claude)
-				try_install "Claude Code" install_claude
 				;;
 			agent-harnesses)
 				try_install "Agent harnesses" install_node_clis
