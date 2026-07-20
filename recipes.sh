@@ -246,16 +246,12 @@ install_claude() {
 install_startup_service() {
 	local config_dir="$HOME/.config/linux-setup"
 	local script_path="$config_dir/startup.sh"
-	local unit_source="$LINUX_SETUP_INSTALL_DIR/configs/linux-setup-startup.service"
-	local unit_target="$HOME/.config/systemd/user/linux-setup-startup.service"
 	local user_name
 
 	command -v systemctl >/dev/null 2>&1 || {
 		log_warn "systemctl is unavailable; skipping the startup service."
 		return 0
 	}
-
-	[ -f "$unit_source" ] || die "Startup service unit not found at $unit_source."
 
 	mkdir -p "$config_dir"
 
@@ -274,9 +270,7 @@ EOF
 	fi
 	chmod +x "$script_path"
 
-	install_config_file "$unit_source" "$unit_target"
-
-	run_quiet "Reloading the systemd user manager" systemctl --user daemon-reload || return 1
+	LINUX_SETUP_INSTALLING_COMPONENT=yes apply_config_component startup-service || return 1
 	run_quiet "Enabling the startup service" \
 		systemctl --user enable linux-setup-startup.service || return 1
 

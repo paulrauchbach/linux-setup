@@ -1,0 +1,70 @@
+{
+  "session": {
+    "restore_on_startup": 1
+  },
+  "background_mode": {
+    "enabled": false
+  },
+  "credentials_enable_service": false,
+  "profile": {
+    "password_manager_enabled": false
+  },
+  "sync": {
+    "suppress_start": true
+  },
+  "translate": {
+    "enabled": true
+  },
+  "browser": {
+    "enable_spellchecking": true
+  },
+  "spellcheck": {
+    "dictionaries": [
+      "de",
+      "en-US"
+    ]
+  },
+  "download": {
+    "prompt_for_download": true,
+    "default_directory": "/home/__USER_NAME__/Downloads"
+  },
+  "bookmark_bar": {
+    "show_on_all_tabs": true
+  },
+  "brave": {
+    "global_privacy_control_enabled": true,
+    "show_screenshot_button": false,
+    "web_discovery_enabled": false,
+    "wayback_machine_enabled": false,
+    "playlist": {
+      "enabled": false
+    },
+    "ai_chat": {
+      "enabled_by_policy": false
+    },
+    "news": {
+      "disabled_by_policy": true
+    },
+    "rewards": {
+      "disabled_by_policy": true
+    },
+    "wallet": {
+      "disabled_by_policy": true
+    },
+    "brave_vpn": {
+      "disabled_by_policy": true
+    },
+    "talk": {
+      "disabled_by_policy": true
+    },
+    "new_tab_page": {
+      "show_brave_news": false,
+      "show_rewards": false,
+      "show_brave_talk": false,
+      "show_brave_vpn": false
+    }
+  },
+  "tor": {
+    "tor_disabled": true
+  }
+}

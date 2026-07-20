@@ -1,4 +1,4 @@
-# Managed by linux-setup (configs/alacritty.toml).
+# Managed by linux-setup (configs/alacritty/alacritty.toml).
 
 [env]
 TERM = "xterm-256color"

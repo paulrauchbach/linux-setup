@@ -190,14 +190,16 @@ apt_install() {
 	return 0
 }
 
-backup_system_file_for_linux_setup() {
-	local file="$1"
-	local backup
+restore_system_file() {
+	local target="$1"
+	local snapshot="$2"
+	local existed="$3"
 
-	[ -e "$file" ] || return 0
-
-	backup="${file}.linux-setup-backup.$(date +%Y%m%d%H%M%S)"
-	run_quiet "Backing up $file" sudo cp -a "$file" "$backup"
+	if [ "$existed" -eq 1 ]; then
+		sudo cp -a -- "$snapshot" "$target"
+	else
+		sudo rm -f -- "$target"
+	fi
 }
 
 add_signed_apt_repo() {
@@ -208,6 +210,11 @@ add_signed_apt_repo() {
 	local source_path="$5"
 	local key_tmp
 	local source_tmp
+	local rollback_dir
+	local key_snapshot
+	local source_snapshot
+	local key_existed=0
+	local source_existed=0
 	local status=0
 
 	is_supported_platform || {
@@ -218,22 +225,41 @@ add_signed_apt_repo() {
 	require_sudo
 	key_tmp="$(mktemp)"
 	source_tmp="$(mktemp)"
+	rollback_dir="$(mktemp -d)"
+	key_snapshot="$rollback_dir/key"
+	source_snapshot="$rollback_dir/source"
 
-	if run_quiet "Downloading $display_name signing key" curl -fsSL "$key_url" -o "$key_tmp" &&
-		backup_system_file_for_linux_setup "$key_path" &&
-		run_quiet "Installing $display_name signing key" sudo install -D -m 0644 "$key_tmp" "$key_path"; then
-		printf '%s\n' "$source_line" >"$source_tmp"
-		backup_system_file_for_linux_setup "$source_path" &&
-			run_quiet "Installing $display_name apt source" sudo install -D -m 0644 "$source_tmp" "$source_path" || status=1
-	else
-		status=1
+	if ! run_quiet "Downloading $display_name signing key" curl -fsSL "$key_url" -o "$key_tmp"; then
+		rm -f "$key_tmp" "$source_tmp"
+		rmdir "$rollback_dir"
+		return 1
+	fi
+	printf '%s\n' "$source_line" >"$source_tmp"
+
+	if sudo test -e "$key_path"; then
+		sudo cp -a -- "$key_path" "$key_snapshot"
+		key_existed=1
+	fi
+	if sudo test -e "$source_path"; then
+		sudo cp -a -- "$source_path" "$source_snapshot"
+		source_existed=1
+	fi
+
+	run_quiet "Installing $display_name signing key" \
+		sudo install -D -m 0644 "$key_tmp" "$key_path" || status=1
+	if [ "$status" -eq 0 ]; then
+		run_quiet "Installing $display_name apt source" \
+			sudo install -D -m 0644 "$source_tmp" "$source_path" || status=1
 	fi
 
 	rm -f "$key_tmp" "$source_tmp"
 
 	if [ "$status" -ne 0 ]; then
-		log_warn "$display_name repository could not be configured; cleaning up partial files."
-		sudo rm -f "$key_path" "$source_path" 2>/dev/null || true
+		log_warn "$display_name repository could not be configured; restoring its previous state."
+		restore_system_file "$key_path" "$key_snapshot" "$key_existed" || true
+		restore_system_file "$source_path" "$source_snapshot" "$source_existed" || true
+		rm -f "$key_snapshot" "$source_snapshot"
+		rmdir "$rollback_dir"
 		return 1
 	fi
 
@@ -242,11 +268,17 @@ add_signed_apt_repo() {
 	# every later package too, so roll the repository back and refresh apt with
 	# a clean source list before continuing.
 	if ! apt_update yes; then
-		log_warn "$display_name repository failed to validate; removing it so other installs are unaffected."
-		sudo rm -f "$key_path" "$source_path" 2>/dev/null || true
+		log_warn "$display_name repository failed to validate; restoring its previous state."
+		restore_system_file "$key_path" "$key_snapshot" "$key_existed" || true
+		restore_system_file "$source_path" "$source_snapshot" "$source_existed" || true
 		apt_update yes || true
+		rm -f "$key_snapshot" "$source_snapshot"
+		rmdir "$rollback_dir"
 		return 1
 	fi
+
+	rm -f "$key_snapshot" "$source_snapshot"
+	rmdir "$rollback_dir"
 
 	return 0
 }
@@ -273,7 +305,7 @@ ui_choose_tier() {
 }
 
 ui_choose_mode() {
-	gum choose --header "What do you want to do?" install update-config </dev/tty
+	gum choose --header "What do you want to do?" install update </dev/tty
 }
 
 ui_choose_extras() {
@@ -284,10 +316,13 @@ ui_choose_extras() {
 }
 
 ui_choose_configs() {
+	local components=()
+
+	mapfile -t components < <(list_config_components)
 	gum choose \
 		--no-limit \
 		--header "Choose configs to update (space to select)" \
-		zsh tmux git alacritty vscode brave agents </dev/tty
+		all "${components[@]}" </dev/tty
 }
 
 ui_confirm_config() {

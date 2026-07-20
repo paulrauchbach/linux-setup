@@ -24,7 +24,7 @@ to the curl examples:
 ```bash
 linux-setup
 linux-setup desktop --config
-linux-setup update-config vscode
+linux-setup update agents
 ```
 
 Pass arguments after `--` to run non-interactively. Install the essentials tier
@@ -111,7 +111,7 @@ setup continues. Anything skipped this way is listed in the closing recap.
 
 **Brave Origin** is free on Linux but shows a one-time *Proceed with Origin for
 free* prompt on first launch — complete it manually. When `--config` is enabled,
-a managed browser policy is installed (see below).
+selected preferences are merged into the active Origin profile (see below).
 
 ## Extras
 
@@ -123,9 +123,9 @@ Extras are independent of the selected tier and are chosen with `--with`:
   or package-manager installers
 - `startup-service`: a systemd **user** service that runs
   `~/.config/linux-setup/startup.sh` on every boot. The service unit is shipped
-  in `configs/`, but the startup script itself is generated once and left
-  untracked so you can put machine-specific commands in it. Linger is enabled so
-  it runs at boot without an interactive login.
+  in `configs/startup-service/`, but the startup script itself is generated once
+  and left untracked so you can put machine-specific commands in it. Linger is
+  enabled so it runs at boot without an interactive login.
 - `yeet`: installs the `yeet` command (to `~/.local/bin`), which stages all
   changes, generates a commit message with an AI CLI, then commits and pushes.
   The backend is selected with `YEET_CLI` (`agy` by default, or `codex` /
@@ -158,36 +158,40 @@ editable defaults when those values are already set.
 When the desktop apps are present, `--config` also applies (each step is skipped
 if its app is not installed):
 
-- **Alacritty** — installs `configs/alacritty.toml` to
+- **Alacritty** — installs `configs/alacritty/alacritty.toml` to
   `~/.config/alacritty/alacritty.toml` (JetBrainsMono Nerd Font, padding,
   opacity).
-- **VS Code** — installs `configs/vscode-settings.json` to
+- **VS Code** — installs `configs/vscode/settings.json` to
   `~/.config/Code/User/settings.json` and installs every extension listed in
-  `configs/vscode-extensions.txt` (edit that file to match your stack).
-- **Brave Origin** — renders `configs/brave-policy.json` (substituting your
-  username into the download directory) and installs it as a root-owned managed
-  policy at `/etc/brave/policies/managed/linux-setup.json`. It restores the last
-  session, disables sync/metrics/password-manager/News/Rewards/Wallet/VPN/Talk/Tor,
-  always shows the bookmarks bar, prompts for each download location, sets DuckDuckGo as default search,
-  force-installs and pins uBlock Origin, and adds `debian` and `perplexity`
-  site-search shortcuts. It also installs user-local Brave Origin desktop-entry
+  `configs/vscode/extensions.txt` (edit that file to match your stack).
+- **Brave Origin** — merges `configs/brave/preferences.json` into the active
+  profile's `Preferences` file after substituting your username into the download
+  directory. Existing profile data and unrelated settings are preserved. The
+  merge restores the last session, disables Sync and Brave's password manager,
+  always shows the bookmarks bar, prompts for each download location, and keeps
+  Origin's optional surfaces hidden. Brave must be closed while the merge runs.
+  The config update removes the legacy `linux-setup.json` managed policy after a
+  successful merge. It also installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so
-  GNOME can associate running browser windows with the correct Alt+Tab app.
+  GNOME can associate running browser windows with the correct Alt+Tab app, and
+  makes stable Brave Origin the default browser for HTTP/HTTPS links and HTML
+  files.
 - **GNOME tray icons** — enables the packaged AppIndicator/KStatusNotifier
   extension when GNOME Shell is available and places 16px tray icons on the right
   side of the top bar. If icons do not appear immediately, log out and back in,
-  then run `linux-setup update-config gnome-tray`.
+  then run `linux-setup update gnome-tray`.
 
-After installing Brave Origin, restart it and verify the policy at
-`brave://policy`. The Brave-specific keys are best-effort and should be checked
-there in a clean VM — adjust any that the build flags as unrecognized. Chromium
-has no equivalent of Firefox's `SearchEngines.Remove`, so bundled search
-providers are not removed.
+Direct profile preferences do not force-install extensions or manage search
+engines. Install and pin uBlock Origin through Brave itself, and configure the
+default and site-search engines in `brave://settings/searchEngines`.
 
 ### Agent config
 
 Agent files are stored under `configs/agents/`:
 
+- `configs/agents/AGENTS.md` is the canonical global instruction source. It is
+  installed as `~/.codex/AGENTS.md` and `~/.claude/CLAUDE.md`, so both agents
+  receive identical instructions.
 - `configs/agents/skills/` is the shared custom skill source and is installed to
   both `~/.codex/skills` and `~/.claude/skills`.
 - `configs/agents/codex/config.toml` is installed to `~/.codex/config.toml`.
@@ -195,14 +199,49 @@ Agent files are stored under `configs/agents/`:
 - `configs/agents/claude/statusline-command.sh` is installed to
   `~/.claude/statusline-command.sh`.
 
-Existing target skill directories are backed up before each shared skill is
-linked into them. The install replaces only skill paths that collide with
-`configs/agents/skills/`, so agent-managed system skills are left alone.
+Each repository skill is linked into both agents' skill directories. Updating
+reconciles those links: new skills are added, removed repository skills are
+unlinked, and same-named local paths are replaced. Unrelated skills, including
+Codex's `.system` directory, are left alone.
+
+Repository-owned config is authoritative. Reapplying it replaces the managed
+target without creating timestamped backups. Mixed files such as `.zshrc` and
+Brave's `Preferences` retain their unrelated local content because setup edits
+only its settings or merges selected values.
+
+## Update config
+
+The update command first refreshes the checkout in
+`~/.local/share/linux-setup`, then applies only the requested targets:
+
+```bash
+linux-setup update agents
+linux-setup update zsh tmux
+linux-setup update all
+```
+
+Multiple space-separated targets work too. `update-config` remains an alias for
+older installed shell helpers.
+
+| Target | Managed configuration |
+| --- | --- |
+| `agents` | Codex and Claude settings, global instructions, and all shared skills |
+| `zsh`, `tmux`, `alacritty`, `vscode`, `brave`, `gnome-tray` | The named application config |
+| `startup-service` | The systemd user unit, when the extra is already installed |
+| `all` | Every discovered component |
+
+Targets are discovered rather than maintained in a central list. Every direct
+child of `configs/` that contains an `update.sh` is an update target; the folder
+name is its CLI name. Each component defines an `update_config` function and
+whether it participates in a normal `--config` installation. `configs/manual/`
+has no updater and is deliberately excluded. Consequently, adding a new target
+requires only a new component directory—no CLI dispatch code needs changing.
 
 ## CLI reference
 
 ```
 Usage: setup.sh [essentials|dev|desktop] [options]
+       setup.sh update [TARGET[,TARGET...]] [options]
 
 Options:
   --config              Apply personal shell, tmux, git, app, and agent config
@@ -224,6 +263,7 @@ variables, then an interactive Gum prompt**:
 | Tier           | positional argument   | `LINUX_SETUP_TIER`       |
 | Extras         | `--with`              | `LINUX_SETUP_EXTRAS`     |
 | Config on/off  | `--config`/`--no-config` | `LINUX_SETUP_CONFIG`  |
+| Update targets | positional after `update` | `LINUX_SETUP_UPDATE_CONFIGS` |
 | Git name       | `--name`              | `LINUX_SETUP_FULL_NAME`  |
 | Git email      | `--email`             | `LINUX_SETUP_EMAIL`      |
 
@@ -244,22 +284,21 @@ repository is fetched from and cloned to.
 
 ### Interactive flow
 
-When run from a terminal with no values supplied, the installer:
+When run from a terminal with no values supplied, setup:
 
 1. Installs Gum if it is missing.
-2. Asks you to choose a tier.
-3. Shows a checklist of optional extras (space to toggle, zero or more).
-4. Asks whether to apply personal config; if yes, prompts for git name and email.
-5. Shows a preflight summary box and asks for confirmation before making changes.
-6. Installs the selected tier, extras, and config, then prints a recap box.
+2. Asks whether to install software or update config.
+3. For an install, asks for the tier, extras, and optional personal config.
+4. For an update, shows a checklist of config targets.
+5. Shows a preflight summary and asks for confirmation before making changes.
 
-A non-interactive run (piped input, no TTY) requires at least a tier and a
-config choice up front, since there is nowhere to prompt.
+A non-interactive install (piped input, no TTY) requires at least a tier and a
+config choice up front. A non-interactive update requires at least one target.
 
-Refresh only agent files from an existing checkout:
+Refresh the complete agent bundle from an existing checkout:
 
 ```bash
-linux-setup update-config agents
+linux-setup update agents
 ```
 
 ## Local development
@@ -274,10 +313,11 @@ Lint the shell scripts the same way CI does:
 
 ```bash
 shellcheck -x $(git ls-files '*.sh')
+bash tests/config-update.sh
 ```
 
-A GitHub Actions workflow (`.github/workflows/shellcheck.yml`) runs the same
-shellcheck pass on every push and pull request.
+A GitHub Actions workflow (`.github/workflows/shellcheck.yml`) runs the lint and
+config-update test on every push and pull request.
 
 ## Testing in a VM (virt-manager + snapshots)
 

@@ -20,6 +20,7 @@ ESSENTIAL_PACKAGES=(
 	fd-find
 	fzf
 	git
+	jq
 	plocate
 	ripgrep
 	tmux
@@ -42,11 +43,13 @@ DESKTOP_PACKAGES=(
 	keepassxc
 	libayatana-appindicator3-1
 	vlc
+	xdg-utils
 )
 
 usage() {
 	cat <<'EOF'
 Usage: setup.sh [essentials|dev|desktop] [options]
+       setup.sh update [TARGET[,TARGET...]] [options]
 
 Options:
   --config              Apply personal shell, tmux, git, app, and agent config
@@ -56,6 +59,9 @@ Options:
   --with EXTRAS         Comma-separated: docker,ollama,agent-harnesses,startup-service,yeet
                         Use --with none to explicitly select no extras
   -h, --help            Show this help
+
+Update targets are discovered from configs/*/update.sh.
+Use "all" to update every discovered component.
 
 Environment:
   LINUX_SETUP_MODE
@@ -70,11 +76,11 @@ EOF
 
 validate_mode() {
 	case "$1" in
-		install | update-config)
+		install | update | update-config)
 			return 0
 			;;
 		*)
-			die "Unknown mode '$1'. Choose install or update-config."
+			die "Unknown mode '$1'. Choose install or update."
 			;;
 	esac
 }
@@ -138,39 +144,6 @@ normalize_extras() {
 			normalized="$normalized,$extra"
 		else
 			normalized="$extra"
-		fi
-	done < <(printf '%s\n' "$1" | tr ',' '\n')
-
-	printf '%s\n' "$normalized"
-}
-
-normalize_configs() {
-	local normalized=""
-	local config
-
-	while IFS= read -r config; do
-		config="${config#"${config%%[![:space:]]*}"}"
-		config="${config%"${config##*[![:space:]]}"}"
-		[ -n "$config" ] || continue
-
-		case "$config" in
-			zsh | tmux | git | alacritty | vscode | brave | gnome-tray | agents)
-				;;
-			*)
-				die "Unknown config '$config'. Choose zsh, tmux, git, alacritty, vscode, brave, gnome-tray, or agents."
-				;;
-		esac
-
-		case ",$normalized," in
-			*",$config,"*)
-				continue
-				;;
-		esac
-
-		if [ -n "$normalized" ]; then
-			normalized="$normalized,$config"
-		else
-			normalized="$config"
 		fi
 	done < <(printf '%s\n' "$1" | tr ',' '\n')
 
@@ -305,7 +278,7 @@ Startup service: add commands to ~/.config/linux-setup/startup.sh; it runs on ev
 
 	if [ "$tier" = "desktop" ]; then
 		recap="$recap
-Brave Origin: complete the one-time free activation on first launch, then verify the managed policy at brave://policy.
+Brave Origin: complete the one-time free activation on first launch. Close Brave before refreshing its preferences with 'linux-setup update brave'.
 Tray icons: log out and back in if GNOME top-bar status icons do not appear immediately.
 Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Nerd Font."
 	fi
@@ -338,17 +311,9 @@ Skipped (review the log above): ${INSTALL_FAILURES[*]}"
 
 show_update_config_preflight() {
 	local configs="$1"
-	local full_name="$2"
-	local email="$3"
 	local summary
 
 	summary="Configs: $(format_configs "$configs")"
-
-	if has_config "$configs" git; then
-		summary="$summary
-Git name: $full_name
-Git email: $email"
-	fi
 
 	if has_interactive_tty; then
 		ui_box "Linux Setup" "$summary"
@@ -371,7 +336,7 @@ Shell: run 'exec zsh' now; new login sessions use zsh by default."
 
 	if has_config "$configs" brave; then
 		recap="$recap
-Brave Origin: verify the managed policy at brave://policy."
+Brave Origin: preferences are merged only while the browser is closed."
 	fi
 
 	if has_interactive_tty && command -v gum >/dev/null 2>&1; then
@@ -383,6 +348,8 @@ Brave Origin: verify the managed policy at brave://policy."
 }
 
 main() {
+	local mode_arg=""
+	local update_configs_arg=""
 	local tier_arg=""
 	local config_arg=""
 	local full_name_arg=""
@@ -390,6 +357,17 @@ main() {
 	local extras_arg=""
 	local extras_arg_set=0
 	local positional_seen=0
+
+	case "${1:-}" in
+		install)
+			mode_arg="install"
+			shift
+			;;
+		update | update-config)
+			mode_arg="update-config"
+			shift
+			;;
+	esac
 
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
@@ -450,7 +428,16 @@ main() {
 				die "Unknown option '$1'."
 				;;
 			*)
-				die "Unknown tier '$1'. Choose essentials, dev, or desktop."
+				if [ "$mode_arg" = "update-config" ]; then
+					if [ -n "$update_configs_arg" ]; then
+						update_configs_arg="$update_configs_arg,$1"
+					else
+						update_configs_arg="$1"
+					fi
+					shift
+				else
+					die "Unknown tier '$1'. Choose essentials, dev, or desktop."
+				fi
 				;;
 		esac
 	done
@@ -463,13 +450,14 @@ main() {
 	local config_value="${config_arg:-${LINUX_SETUP_CONFIG:-}}"
 	local full_name="${full_name_arg:-${LINUX_SETUP_FULL_NAME:-}}"
 	local email="${email_arg:-${LINUX_SETUP_EMAIL:-}}"
-	local mode="${LINUX_SETUP_MODE:-}"
-	local update_configs="${LINUX_SETUP_UPDATE_CONFIGS:-}"
+	local mode="${mode_arg:-${LINUX_SETUP_MODE:-}}"
+	local update_configs="${update_configs_arg:-${LINUX_SETUP_UPDATE_CONFIGS:-}}"
 	local extras=""
 	local extras_set=0
 
 	if [ -n "$mode" ]; then
 		validate_mode "$mode"
+		[ "$mode" != "update" ] || mode="update-config"
 	fi
 
 	if [ -n "$tier" ]; then
@@ -502,6 +490,7 @@ main() {
 		if has_interactive_tty; then
 			mode="$(ui_choose_mode)" || die "Mode selection cancelled."
 			validate_mode "$mode"
+			[ "$mode" != "update" ] || mode="update-config"
 		else
 			mode="install"
 		fi
@@ -517,21 +506,7 @@ main() {
 		update_configs="$(normalize_configs "$update_configs")"
 		[ -n "$update_configs" ] || die "No configs selected."
 
-		if has_config "$update_configs" git; then
-			if [ -z "$full_name" ]; then
-				has_interactive_tty ||
-					die "Git name is required when updating git config. Pass --name or set LINUX_SETUP_FULL_NAME."
-				full_name="$(prompt_nonempty "Full name" "Your Name" "$(current_git_config user.name)")"
-			fi
-
-			if [ -z "$email" ]; then
-				has_interactive_tty ||
-					die "Git email is required when updating git config. Pass --email or set LINUX_SETUP_EMAIL."
-				email="$(prompt_nonempty "Email" "you@example.com" "$(current_git_config user.email)")"
-			fi
-		fi
-
-		show_update_config_preflight "$update_configs" "$full_name" "$email"
+		show_update_config_preflight "$update_configs"
 
 		if has_interactive_tty && ! ui_confirm_run; then
 			log_warn "Config update cancelled."
@@ -540,7 +515,7 @@ main() {
 
 		detect_platform
 		log_title "Applying selected config"
-		apply_selected_config "$update_configs" "$full_name" "$email"
+		apply_selected_config "$update_configs"
 		show_update_config_recap "$update_configs"
 		return 0
 	fi
@@ -621,4 +596,6 @@ main() {
 	show_recap "$tier" "$extras" "$config_value"
 }
 
-main "$@"
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+	main "$@"
+fi

@@ -16,3 +16,6 @@ jobs:
         run: |
           shellcheck --version
           shellcheck -x $(git ls-files '*.sh')
+
+      - name: Test config updates
+        run: bash tests/config-update.sh
