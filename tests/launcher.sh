@@ -43,7 +43,12 @@ mkdir -p "$TEST_HOME"
 # shellcheck disable=SC2016
 printf '#!/usr/bin/env bash\nprintf "new:%%s\\n" "$1"\n' >"$SOURCE/setup.sh"
 git -C "$SOURCE" add setup.sh
-git -C "$SOURCE" commit --quiet -m update
+git -C "$SOURCE" commit --quiet -m intermediate-update
+# Advance twice so a depth-one fetch cannot connect the installed shallow tip
+# to the new remote tip without deepening its history.
+printf '# launcher update fixture\n' >>"$SOURCE/setup.sh"
+git -C "$SOURCE" add setup.sh
+git -C "$SOURCE" commit --quiet -m final-update
 git -C "$SOURCE" push --quiet
 
 output="$(
