@@ -59,6 +59,10 @@ cmp -s "$REPO_ROOT/configs/ulauncher/ulauncher.desktop" "$TEST_HOME/.config/auto
 [ "$(cat "$TEST_HOME/tab-search-installed")" = installed ] || fail "tab-search installer was not run"
 [ -f "$TEST_HOME/.config/ulauncher/user-themes/liquid-glass-dark/theme.css" ] ||
 	fail "Ulauncher theme was not installed"
+[ -f "$TEST_HOME/.config/ulauncher/icons/chatgpt.svg" ] ||
+	fail "Ulauncher shortcut icons were not installed"
+[ -L "$TEST_HOME/.local/share/ulauncher/extensions/io.github.repository-search" ] ||
+	fail "GitHub repository search extension was not installed"
 
 run_update >/dev/null
 

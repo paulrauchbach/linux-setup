@@ -7,6 +7,9 @@ update_config() {
 	local destination="$HOME/.local/share/brave-tab-search"
 	local theme_file
 	local relative_theme_file
+	local icon_file
+	local github_extension_source="$LINUX_SETUP_COMPONENT_DIR/extensions/github-repos"
+	local github_extension_target="$HOME/.local/share/ulauncher/extensions/io.github.repository-search"
 
 	command -v ulauncher >/dev/null 2>&1 || {
 		log_warn "Skipping Ulauncher config because Ulauncher is not installed."
@@ -17,10 +20,20 @@ update_config() {
 	install_config_file "$LINUX_SETUP_COMPONENT_DIR/settings.json" "$HOME/.config/ulauncher/settings.json"
 	install_config_file "$LINUX_SETUP_COMPONENT_DIR/shortcuts.json" "$HOME/.config/ulauncher/shortcuts.json"
 	install_config_file "$LINUX_SETUP_COMPONENT_DIR/ulauncher.desktop" "$HOME/.config/autostart/ulauncher.desktop"
+	for icon_file in "$LINUX_SETUP_COMPONENT_DIR/icons"/*; do
+		[ -f "$icon_file" ] || continue
+		install_config_file "$icon_file" "$HOME/.config/ulauncher/icons/$(basename "$icon_file")"
+	done
 	while IFS= read -r -d '' theme_file; do
 		relative_theme_file="${theme_file#"$LINUX_SETUP_COMPONENT_DIR/themes/"}"
 		install_config_file "$theme_file" "$HOME/.config/ulauncher/user-themes/$relative_theme_file"
 	done < <(find "$LINUX_SETUP_COMPONENT_DIR/themes" -type f -print0)
+	mkdir -p "$(dirname "$github_extension_target")"
+	if [ -e "$github_extension_target" ] && [ ! -L "$github_extension_target" ]; then
+		die "$github_extension_target exists and is not a managed symbolic link."
+	fi
+	run_quiet "Installing GitHub repository search" \
+		ln -sfn "$github_extension_source" "$github_extension_target"
 	install_or_update_git_repo "Brave tab search" "$repo_url" "$destination"
 	[ -x "$destination/install.sh" ] || die "Brave tab search installer not found at $destination/install.sh."
 	"$destination/install.sh"

@@ -1,0 +1,19 @@
+{
+  "required_api_version": "2.0.0",
+  "name": "GitHub Repositories",
+  "description": "Search all repositories owned by paulrauchbach",
+  "developer_name": "Paul",
+  "icon": "images/github.svg",
+  "options": {
+    "query_debounce": 0.08
+  },
+  "preferences": [
+    {
+      "id": "github_repos_kw",
+      "type": "keyword",
+      "name": "GitHub repositories",
+      "description": "Search public and private GitHub repositories",
+      "default_value": "repo"
+    }
+  ]
+}

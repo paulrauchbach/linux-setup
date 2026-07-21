@@ -182,8 +182,9 @@ if its app is not installed):
   side of the top bar. If icons do not appear immediately, log out and back in,
   then run `linux-setup update gnome-tray`.
 - **Ulauncher** — installs the pinned official Ulauncher release, applies the
-  current search shortcuts and Liquid Glass themes, configures Wayland
-  autostart, and clones the private Brave tab-search bridge into
+  `gpt`, `p`, and `ddg` search shortcuts and Liquid Glass themes, configures
+  Wayland autostart, adds `repo` suggestions for all GitHub repositories owned
+  by `paulrauchbach`, and clones the private Brave tab-search bridge into
   `~/.local/share/brave-tab-search`. Configured desktop installs fail before
   making changes when that private repository is not accessible over SSH.
 - **GNOME desktop** — applies the Tokyo Night/Yaru appearance, six-workspace

@@ -1,32 +1,32 @@
 {
-  "f3b4daf0-c302-4bb8-bc2c-52908660c2f3": {
-    "id": "f3b4daf0-c302-4bb8-bc2c-52908660c2f3",
-    "name": "Google Search",
-    "keyword": "g",
-    "cmd": "https://google.com/search?q=%s",
-    "icon": "/usr/share/ulauncher/media/google-search-icon.png",
+  "9d3563e9-076c-449f-bf0f-f7e604210a30": {
+    "id": "9d3563e9-076c-449f-bf0f-f7e604210a30",
+    "name": "ChatGPT",
+    "keyword": "gpt",
+    "cmd": "https://chatgpt.com/?q=%s",
+    "icon": "~/.config/ulauncher/icons/chatgpt.svg",
     "is_default_search": true,
     "run_without_argument": false,
-    "added": 1783969299.5190654
+    "added": 1784642400.0
   },
-  "56702f9f-7753-4e85-9b0b-2f12d817b99b": {
-    "id": "56702f9f-7753-4e85-9b0b-2f12d817b99b",
-    "name": "Stack Overflow",
-    "keyword": "so",
-    "cmd": "https://stackoverflow.com/search?q=%s",
-    "icon": "/usr/share/ulauncher/media/stackoverflow-icon.svg",
+  "165414bd-3188-4d22-aeb9-e99301c86c76": {
+    "id": "165414bd-3188-4d22-aeb9-e99301c86c76",
+    "name": "Perplexity",
+    "keyword": "p",
+    "cmd": "https://www.perplexity.ai/search?q=%s",
+    "icon": "~/.config/ulauncher/icons/perplexity.svg",
     "is_default_search": true,
     "run_without_argument": false,
-    "added": 1783969299.5191228
+    "added": 1784642401.0
   },
-  "ae572245-76a1-4d2b-b414-246d4a112214": {
-    "id": "ae572245-76a1-4d2b-b414-246d4a112214",
-    "name": "Wikipedia",
-    "keyword": "wiki",
-    "cmd": "https://en.wikipedia.org/wiki/%s",
-    "icon": "/usr/share/ulauncher/media/wikipedia-icon.png",
+  "de266ec3-d2ff-4f12-b2eb-fe3eb89f0471": {
+    "id": "de266ec3-d2ff-4f12-b2eb-fe3eb89f0471",
+    "name": "DuckDuckGo",
+    "keyword": "ddg",
+    "cmd": "https://duckduckgo.com/?q=%s",
+    "icon": "~/.config/ulauncher/icons/duckduckgo.svg",
     "is_default_search": true,
     "run_without_argument": false,
-    "added": 1783969299.5191538
+    "added": 1784642402.0
   }
 }

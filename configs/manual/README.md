@@ -63,8 +63,9 @@ sudo apt-get install -y \
 GNOME Sushi provides spacebar previews in Files. GNOME Tweaks and Extension
 Manager are installed as manual control panels.
 
-Configure Ulauncher to start in the Wayland session. Ulauncher's own hotkey is
-left disabled because GNOME owns `Super+Space` below.
+Configure Ulauncher to start with the display backend selected by the active
+GNOME session. Ulauncher's own hotkey is left disabled because GNOME owns
+`Super+Space` below.
 
 ```bash
 mkdir -p "$HOME/.config/autostart"
@@ -73,7 +74,7 @@ cat >"$HOME/.config/autostart/ulauncher.desktop" <<'EOF'
 Name=Ulauncher
 Comment=Application launcher
 TryExec=/usr/bin/ulauncher
-Exec=env GDK_BACKEND=wayland /usr/bin/ulauncher --hide-window
+Exec=/usr/bin/ulauncher --hide-window
 Icon=ulauncher
 Terminal=false
 Type=Application
