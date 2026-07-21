@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Ulauncher
+Comment=Application launcher
+TryExec=/usr/bin/ulauncher
+Exec=env GDK_BACKEND=wayland /usr/bin/ulauncher --hide-window
+Icon=ulauncher
+Terminal=false
+Type=Application
+X-GNOME-Autostart-enabled=true

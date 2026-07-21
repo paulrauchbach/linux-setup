@@ -181,6 +181,15 @@ if its app is not installed):
   extension when GNOME Shell is available and places 16px tray icons on the right
   side of the top bar. If icons do not appear immediately, log out and back in,
   then run `linux-setup update gnome-tray`.
+- **Ulauncher** — installs the pinned official Ulauncher release, applies the
+  current search shortcuts and Liquid Glass themes, configures Wayland
+  autostart, and clones the private Brave tab-search bridge into
+  `~/.local/share/brave-tab-search`. Configured desktop installs fail before
+  making changes when that private repository is not accessible over SSH.
+- **GNOME desktop** — applies the Tokyo Night/Yaru appearance, six-workspace
+  layout, keyboard shortcuts, favourites, app folders, and settings for any
+  supported Shell extensions already installed. Missing optional extensions
+  are reported for installation through Extension Manager.
 
 Direct profile preferences do not force-install extensions or manage search
 engines. Install and pin uBlock Origin through Brave itself, and configure the
@@ -227,7 +236,7 @@ older installed shell helpers.
 | Target | Managed configuration |
 | --- | --- |
 | `agents` | Codex and Claude settings, global instructions, and all shared skills |
-| `zsh`, `tmux`, `alacritty`, `vscode`, `brave`, `gnome-tray` | The named application config |
+| `zsh`, `tmux`, `alacritty`, `vscode`, `brave`, `ulauncher`, `gnome`, `gnome-tray` | The named application or desktop config |
 | `startup-service` | The systemd user unit, when the extra is already installed |
 | `all` | Every discovered component |
 
@@ -315,10 +324,13 @@ Lint the shell scripts the same way CI does:
 ```bash
 shellcheck -x $(git ls-files '*.sh')
 bash tests/config-update.sh
+bash tests/gnome-config.sh
+bash tests/launcher.sh
+bash tests/ulauncher-config.sh
 ```
 
 A GitHub Actions workflow (`.github/workflows/shellcheck.yml`) runs the lint and
-config-update test on every push and pull request.
+configuration tests on every push and pull request.
 
 ## Testing in a VM (virt-manager + snapshots)
 

@@ -18,4 +18,8 @@ jobs:
           shellcheck -x $(git ls-files '*.sh')
 
       - name: Test config updates
-        run: bash tests/config-update.sh
+        run: |
+          bash tests/config-update.sh
+          bash tests/gnome-config.sh
+          bash tests/launcher.sh
+          bash tests/ulauncher-config.sh

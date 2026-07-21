@@ -430,6 +430,45 @@ Signed-By: /etc/apt/keyrings/brave-browser-archive-keyring.gpg"
 	apt_install brave-origin
 }
 
+install_ulauncher() {
+	local version="5.15.15"
+	local expected_sha256="a78826a5121e9614ec4b76d58ae421a85c11bf4639067467133df72d1340c6b4"
+	local url="https://github.com/Ulauncher/Ulauncher/releases/download/$version/ulauncher_${version}_all.deb"
+	local installed_version=""
+	local package
+	local actual_sha256
+
+	is_supported_platform || {
+		log_warn "Skipping Ulauncher on unsupported platform '$LINUX_SETUP_OS_ID'."
+		return 0
+	}
+
+	if command -v dpkg-query >/dev/null 2>&1; then
+		installed_version="$(dpkg-query -W -f='${Version}' ulauncher 2>/dev/null || true)"
+	fi
+	if [ -n "$installed_version" ] && dpkg --compare-versions "$installed_version" ge "$version"; then
+		return 0
+	fi
+
+	package="$(mktemp --suffix=.deb)"
+	if ! run_quiet "Downloading Ulauncher $version" curl -fsSL "$url" -o "$package"; then
+		rm -f "$package"
+		return 1
+	fi
+	actual_sha256="$(sha256sum "$package" | cut -d' ' -f1)"
+	if [ "$actual_sha256" != "$expected_sha256" ]; then
+		rm -f "$package"
+		log_error "Ulauncher $version checksum mismatch. Expected $expected_sha256, got $actual_sha256."
+		return 1
+	fi
+
+	if ! run_quiet "Installing Ulauncher $version" sudo apt-get install -y -qq "$package"; then
+		rm -f "$package"
+		return 1
+	fi
+	rm -f "$package"
+}
+
 install_nerd_font() {
 	local font_name="JetBrainsMono"
 	local font_label="JetBrainsMono Nerd Font"
@@ -472,6 +511,7 @@ install_desktop() {
 	try_install "Signal" install_signal
 	try_install "Spotify" install_spotify
 	try_install "Brave Origin" install_brave
+	try_install "Ulauncher" install_ulauncher
 	try_install "Nerd Font" install_nerd_font
 }
 

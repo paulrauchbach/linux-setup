@@ -1,8 +1,10 @@
 # Personal GNOME setup
 
-This is the source of truth for configuring a fresh GNOME desktop after running
-the `desktop` tier of `linux-setup`. It adapts the GNOME configuration from
-Omakub to the applications installed by this setup.
+This is the detailed design reference for the GNOME configuration automated by
+`configs/gnome/update.sh` and `configs/ulauncher/update.sh`. A configured
+`desktop` tier run applies it; use `linux-setup update gnome,ulauncher` to
+reapply it later. It adapts the GNOME configuration from Omakub to the
+applications installed by this setup.
 
 An agent following this document should apply the configuration, not merely
 describe it. Run user-level commands as the logged-in desktop user. Use `sudo`
@@ -51,18 +53,11 @@ sudo apt-get install -y \
   gnome-shell-extension-manager \
   gnome-sushi \
   gnome-tweaks \
-  pipx \
   software-properties-common \
   yaru-theme-gtk \
   yaru-theme-icon
 
-# Ulauncher is distributed through its maintained Ubuntu PPA.
-sudo add-apt-repository -y ppa:agornostal/ulauncher
-sudo apt-get update
-sudo apt-get install -y ulauncher
-
-pipx install gnome-extensions-cli --system-site-packages || \
-  pipx upgrade gnome-extensions-cli
+# linux-setup installs a pinned, checksum-verified official Ulauncher .deb.
 ```
 
 GNOME Sushi provides spacebar previews in Files. GNOME Tweaks and Extension
@@ -110,13 +105,12 @@ do
 done
 ```
 
-Install the selected extensions. `gext` chooses a release compatible with the
-installed GNOME Shell version, so do not hard-code extension version numbers.
+Install the selected extensions through GNOME Extension Manager, which chooses
+a release compatible with the installed GNOME Shell version. They are optional:
+the automated config reports missing UUIDs and configures each extension once
+its schema is available.
 
 ```bash
-GEXT="$(command -v gext 2>/dev/null || true)"
-[ -n "$GEXT" ] || GEXT="$HOME/.local/bin/gext"
-
 extensions=(
   tactile@lundal.io
   just-perfection-desktop@just-perfection
@@ -126,10 +120,6 @@ extensions=(
   tophat@fflewddur.github.io
   AlphabeticalAppGrid@stuarthayhurst
 )
-
-for uuid in "${extensions[@]}"; do
-  "$GEXT" install "$uuid"
-done
 ```
 
 Copy the extension schemas system-wide so `gsettings` can configure them before
@@ -360,7 +350,7 @@ gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled false
 
 # Normal lock and idle behaviour after setup finishes.
 gsettings set org.gnome.desktop.screensaver lock-enabled true
-gsettings set org.gnome.desktop.session idle-delay 300
+gsettings set org.gnome.desktop.session idle-delay 0
 
 # Caps Lock becomes the Compose key.
 gsettings set org.gnome.desktop.input-sources xkb-options "['compose:caps']"

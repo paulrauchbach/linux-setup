@@ -39,11 +39,17 @@ DEV_PACKAGES=(
 # own installers in install_desktop.
 DESKTOP_PACKAGES=(
 	alacritty
+	flameshot
+	gnome-shell-extension-manager
 	gnome-shell-extension-appindicator
+	gnome-sushi
+	gnome-tweaks
 	keepassxc
 	libayatana-appindicator3-1
 	vlc
 	xdg-utils
+	yaru-theme-gtk
+	yaru-theme-icon
 )
 
 usage() {
@@ -279,6 +285,7 @@ Startup service: add commands to ~/.config/linux-setup/startup.sh; it runs on ev
 	if [ "$tier" = "desktop" ]; then
 		recap="$recap
 Brave Origin: complete the one-time free activation on first launch. Close Brave before refreshing its preferences with 'linux-setup update brave'.
+Ulauncher: load ~/.local/share/brave-tab-search/brave-extension once from brave://extensions, then restart Ulauncher.
 Tray icons: log out and back in if GNOME top-bar status icons do not appear immediately.
 Fonts: start a new session or run 'fc-cache -f' so apps pick up JetBrainsMono Nerd Font."
 	fi
@@ -337,6 +344,16 @@ Shell: run 'exec zsh' now; new login sessions use zsh by default."
 	if has_config "$configs" brave; then
 		recap="$recap
 Brave Origin: preferences are merged only while the browser is closed."
+	fi
+
+	if has_config "$configs" ulauncher; then
+		recap="$recap
+Ulauncher: restart it after updates. If needed, load ~/.local/share/brave-tab-search/brave-extension from brave://extensions."
+	fi
+
+	if has_config "$configs" gnome; then
+		recap="$recap
+GNOME: log out and back in if Shell extension changes are not visible yet."
 	fi
 
 	if has_interactive_tty && command -v gum >/dev/null 2>&1; then
@@ -551,6 +568,12 @@ main() {
 				die "Git email is required when config is enabled. Pass --email or set LINUX_SETUP_EMAIL."
 			email="$(prompt_nonempty "Email" "you@example.com" "$(current_git_config user.email)")"
 		fi
+	fi
+
+	if [ "$tier" = "desktop" ] && [ "$config_value" = "yes" ]; then
+		require_git_repo_access \
+			"Configured desktop installation" \
+			"${BRAVE_TAB_SEARCH_REPO_URL:-git@github.com:paulrauchbach/brave-tab-search.git}"
 	fi
 
 	show_preflight "$tier" "$config_value" "$extras" "$full_name" "$email"

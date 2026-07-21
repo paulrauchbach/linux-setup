@@ -40,6 +40,16 @@ install_or_update_git_repo() {
 	fi
 }
 
+require_git_repo_access() {
+	local display_name="$1"
+	local repo_url="$2"
+	local ssh_command="ssh -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=accept-new"
+
+	if ! GIT_SSH_COMMAND="$ssh_command" git ls-remote --exit-code "$repo_url" HEAD >/dev/null 2>&1; then
+		die "$display_name requires SSH access to $repo_url. Configure a GitHub SSH key, verify it with 'ssh -T git@github.com', and run setup again."
+	fi
+}
+
 apply_git_config() {
 	local full_name="$1"
 	local email="$2"
