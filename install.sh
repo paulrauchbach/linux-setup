@@ -48,5 +48,8 @@ else
 	git clone --quiet --depth=1 --branch "$REPO_REF" "$REPO_URL" "$INSTALL_DIR"
 fi
 
+mkdir -p "$HOME/.local/bin"
+install -m 0755 "$INSTALL_DIR/linux-setup" "$HOME/.local/bin/linux-setup"
+
 printf '\n==> Starting setup\n'
 exec env LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" bash "$INSTALL_DIR/setup.sh" "$@"

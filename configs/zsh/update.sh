@@ -145,12 +145,6 @@ fi
 if [ -x "$HOME/.local/bin/yeet" ]; then
   alias yeet="YEET_CLI=agy $HOME/.local/bin/yeet"
 fi
-
-linux-setup() {
-  local bootstrap_url="https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh"
-
-  bash -c 'bootstrap_url="$1"; shift; curl -fsSL "$bootstrap_url" | bash -s -- "$@"' _ "$bootstrap_url" "$@"
-}
 # <<< linux-setup managed <<<
 EOF
 

@@ -14,12 +14,13 @@ curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/inst
 ```
 
 The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the
-repository to `~/.local/share/linux-setup`, and forwards every argument to
-`setup.sh`. Re-running it updates the existing checkout in place.
+repository to `~/.local/share/linux-setup`, installs the `linux-setup` launcher
+in `~/.local/bin`, and forwards every argument to `setup.sh`. Re-running the
+bootstrap updates or repairs the installation.
 
-With zsh config applied, a `linux-setup` helper is also added to `.zshrc`. It
-runs the bootstrap command above and forwards arguments, so these are equivalent
-to the curl examples:
+The launcher refreshes the existing checkout as the current user, then executes
+the newly fetched `setup.sh`. It does not prepare packages or request sudo;
+individual setup operations request elevated access only when they need it:
 
 ```bash
 linux-setup

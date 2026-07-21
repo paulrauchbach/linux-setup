@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+: "${HOME:?HOME is not set. Please run as a regular user.}"
+
+die() {
+	printf 'linux-setup: %s\n' "$*" >&2
+	exit 1
+}
+
+INSTALL_DIR="${LINUX_SETUP_INSTALL_DIR:-$HOME/.local/share/linux-setup}"
+REPO_REF="${LINUX_SETUP_REPO_REF:-main}"
+
+[ -d "$INSTALL_DIR/.git" ] ||
+	die "$INSTALL_DIR is not a Git checkout. Run install.sh to install or repair linux-setup."
+
+if ! git -C "$INSTALL_DIR" diff --quiet ||
+	! git -C "$INSTALL_DIR" diff --cached --quiet; then
+	die "$INSTALL_DIR has local changes. Commit or discard them before updating."
+fi
+
+printf '\nLinux Setup\n\n'
+printf '==> Refreshing linux-setup\n'
+
+git -C "$INSTALL_DIR" fetch --quiet origin "$REPO_REF"
+
+if git -C "$INSTALL_DIR" show-ref --verify --quiet "refs/heads/$REPO_REF"; then
+	git -C "$INSTALL_DIR" checkout --quiet "$REPO_REF"
+else
+	git -C "$INSTALL_DIR" checkout --quiet -b "$REPO_REF"
+fi
+
+git -C "$INSTALL_DIR" merge --quiet --ff-only FETCH_HEAD ||
+	die "the local $REPO_REF branch cannot be fast-forwarded to origin/$REPO_REF."
+
+exec env LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" bash "$INSTALL_DIR/setup.sh" "$@"
