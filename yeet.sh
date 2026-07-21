@@ -32,10 +32,6 @@ validate_commit_message() {
 	local message_file="$1"
 
 	[ -s "$message_file" ] || die "$yeet_cli did not generate a commit message"
-
-	if grep -qi '^You are currently using \*\*Gemini .*Flash\*\*\.' "$message_file"; then
-		die "$yeet_cli returned model status instead of a commit message"
-	fi
 }
 
 push_current_branch() {
@@ -83,7 +79,7 @@ generate_commit_message() {
 	agy)
 		local prompt_text
 		prompt_text="$(<"$prompt_file")"
-		(cd "$repo_root" && agy --print --model "$yeet_model" "$prompt_text") \
+		(cd "$repo_root" && agy --model "$yeet_model" --print "$prompt_text") \
 			>"$raw_message_file" 2>"$err_file"
 		;;
 	esac
@@ -93,7 +89,7 @@ yeet_cli="${YEET_CLI:-agy}"
 case "$yeet_cli" in
 codex) yeet_model="${YEET_MODEL:-gpt-5.4-mini}" ;;
 claude) yeet_model="${YEET_MODEL:-haiku}" ;;
-agy) yeet_model="${YEET_MODEL:-Gemini 3.5 Flash (Low)}" ;;
+agy) yeet_model="${YEET_MODEL:-gemini-3.5-flash-low}" ;;
 *) die "unknown YEET_CLI: $yeet_cli (use codex, claude, or agy)" ;;
 esac
 
