@@ -1,6 +1,6 @@
 ---
 name: subagent-codex
-description: Run Codex CLI subagents for coding, implementation, debugging, tests, code review, or multi-step repository work. Codex is strongest when the subagent must reason through code, edit files, run tests, and return a defensible implementation or review. Always use GPT 5.5 and set reasoning effort to low, medium, high, or xhigh based on task difficulty. Use this skill when delegating work to a Codex subagent, including worktree setup when isolation is needed.
+description: Run Codex CLI subagents for coding, implementation, debugging, tests, code review, or multi-step repository work. Codex is strongest when the subagent must reason through code, edit files, run tests, and return a defensible implementation or review. Always use GPT 5.6 Sol and set reasoning effort to low, medium, high, or xhigh based on task difficulty. Use this skill when delegating work to a Codex subagent, including worktree setup when isolation is needed.
 ---
 
 # Codex Subagents
@@ -12,7 +12,7 @@ Always use GPT 5.5. Set `model_reasoning_effort` by difficulty: `low` for simple
 Run from the target repo:
 
 ```sh
-codex exec --cd /path/to/repo --dangerously-bypass-approvals-and-sandbox -m gpt-5.5 -c model_reasoning_effort="high" - <<'PROMPT'
+codex exec --cd /path/to/repo --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_reasoning_effort="high" - <<'PROMPT'
 You are a Codex subagent. Implement the requested change.
 
 Task:
