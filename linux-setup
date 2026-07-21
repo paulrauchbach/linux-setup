@@ -25,6 +25,14 @@ printf '==> Refreshing linux-setup\n'
 
 git -C "$INSTALL_DIR" fetch --quiet origin "$REPO_REF"
 
+# A depth-one installation can lose the common ancestor when the remote moves
+# forward by more than one commit. Restore the omitted history before deciding
+# that the installed branch has genuinely diverged.
+if ! git -C "$INSTALL_DIR" merge-base --is-ancestor "$REPO_REF" FETCH_HEAD 2>/dev/null &&
+	[ "$(git -C "$INSTALL_DIR" rev-parse --is-shallow-repository)" = true ]; then
+	git -C "$INSTALL_DIR" fetch --quiet --unshallow origin "$REPO_REF"
+fi
+
 if git -C "$INSTALL_DIR" show-ref --verify --quiet "refs/heads/$REPO_REF"; then
 	git -C "$INSTALL_DIR" checkout --quiet "$REPO_REF"
 else
