@@ -238,6 +238,7 @@ older installed shell helpers.
 | `agents` | Codex and Claude settings, global instructions, and all shared skills |
 | `zsh`, `tmux`, `alacritty`, `vscode`, `brave`, `ulauncher`, `gnome`, `gnome-tray` | The named application or desktop config |
 | `startup-service` | The systemd user unit, when the extra is already installed |
+| `yeet` | The `yeet` command in `~/.local/bin` |
 | `all` | Every discovered component |
 
 Targets are discovered rather than maintained in a central list. Every direct

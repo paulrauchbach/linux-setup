@@ -57,6 +57,12 @@ ln -s \
 
 run_update agents >/dev/null
 
+mkdir -p "$TEST_HOME/.local/bin"
+printf 'outdated yeet\n' >"$TEST_HOME/.local/bin/yeet"
+run_update yeet >/dev/null
+assert_file_matches "$REPO_ROOT/yeet.sh" "$TEST_HOME/.local/bin/yeet"
+[ -x "$TEST_HOME/.local/bin/yeet" ] || fail "updated yeet is not executable"
+
 assert_file_matches \
 	"$REPO_ROOT/configs/agents/codex/config.toml" \
 	"$TEST_HOME/.codex/config.toml"
@@ -106,6 +112,9 @@ assert_equal "agents" "$(normalize_configs agents,agents)"
 component_applies_during_install agents || fail "agents should be applied during installation"
 if component_applies_during_install startup-service; then
 	fail "startup-service should only be applied when its extra is installed"
+fi
+if component_applies_during_install yeet; then
+	fail "yeet should only be applied when its extra is installed or explicitly updated"
 fi
 
 if list_config_components | grep -qx manual; then
