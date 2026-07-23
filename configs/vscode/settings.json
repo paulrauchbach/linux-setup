@@ -1,5 +1,11 @@
 {
   "breadcrumbs.enabled": true,
+  "cSpell.enabledFileTypes": {
+    "*": false,
+    "markdown": true,
+    "plaintext": true,
+    "restructuredtext": true
+  },
   "debug.javascript.autoAttachFilter": "smart",
   "diffEditor.ignoreTrimWhitespace": false,
   "editor.fontFamily": "'JetBrainsMono Nerd Font', 'Droid Sans Mono', monospace",
