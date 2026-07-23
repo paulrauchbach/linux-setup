@@ -1,2 +1,6 @@
 .codex
 .agents
+
+# Python bytecode (e.g. ulauncher extensions)
+__pycache__/
+*.py[cod]

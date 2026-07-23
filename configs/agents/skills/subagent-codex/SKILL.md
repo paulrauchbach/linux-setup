@@ -7,7 +7,7 @@ description: Run Codex CLI subagents for coding, implementation, debugging, test
 
 Use Codex for implementation, debugging, tests, refactors, reviews, and other medium or hard repo tasks. It can edit files, run commands, and verify its work.
 
-Always use GPT 5.5. Set `model_reasoning_effort` by difficulty: `low` for simple lookups, `medium` for ordinary edits, `high` for debugging or cross-file changes, and `xhigh` for complex architecture, risky refactors, or difficult failures.
+Always use GPT 5.6 Sol. Set `model_reasoning_effort` by difficulty: `low` for simple lookups, `medium` for ordinary edits, `high` for debugging or cross-file changes, and `xhigh` for complex architecture, risky refactors, or difficult failures.
 
 Run from the target repo:
 
@@ -31,7 +31,7 @@ Return:
 PROMPT
 ```
 
-Add `--search` only when current external facts are required.
+Add `-c web_search="live"` only when current external facts are required (`codex exec` has no `--search` flag; the default `web_search` mode is `cached`).
 
 ## Worktree Isolation
 
@@ -39,7 +39,7 @@ Use a worktree when the subagent may edit files and you want to avoid collisions
 
 ```sh
 git worktree add ../repo-codex-subagent -b subagent/codex-task
-codex exec --cd ../repo-codex-subagent --dangerously-bypass-approvals-and-sandbox -m gpt-5.5 -c model_reasoning_effort="high" - <<'PROMPT'
+codex exec --cd ../repo-codex-subagent --dangerously-bypass-approvals-and-sandbox -m gpt-5.6-sol -c model_reasoning_effort="high" - <<'PROMPT'
 Implement the task in this worktree. Keep commits unmade unless asked.
 ...
 PROMPT
