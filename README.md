@@ -120,8 +120,9 @@ Extras are independent of the selected tier and are chosen with `--with`:
 
 - `docker`: Docker Engine, Compose and Buildx plugins, plus lazydocker
 - `ollama`: Ollama's official Linux installer
-- `agent-harnesses`: Claude Code, Codex CLI, and Gemini CLI through their native
-  or package-manager installers
+- `agent-harnesses`: Antigravity CLI, Claude Code, Codex CLI, Gemini CLI, Grok
+  CLI, OpenCode, and Pi. Native standalone builds are used where upstream
+  recommends them; Codex, Gemini, and Pi are installed through Node.js.
 - `startup-service`: a systemd **user** service that runs
   `~/.config/linux-setup/startup.sh` on every boot. The service unit is shipped
   in `configs/startup-service/`, but the startup script itself is generated once
@@ -304,6 +305,11 @@ When run from a terminal with no values supplied, setup:
 4. For an update, shows a checklist of config targets.
 5. Shows a preflight summary and asks for confirmation before making changes.
 
+A target passed directly to `linux-setup update`, such as `agents` in
+`linux-setup update agents`, skips the final confirmation because the explicit
+selection already expresses intent. Checklist-selected and environment-provided
+targets still show the confirmation in an interactive terminal.
+
 A non-interactive install (piped input, no TTY) requires at least a tier and a
 config choice up front. A non-interactive update requires at least one target.
 
@@ -325,6 +331,7 @@ Lint the shell scripts the same way CI does:
 
 ```bash
 shellcheck -x $(git ls-files '*.sh')
+bash tests/agent-harnesses.sh
 bash tests/config-update.sh
 bash tests/gnome-config.sh
 bash tests/launcher.sh

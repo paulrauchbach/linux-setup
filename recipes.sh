@@ -243,6 +243,18 @@ install_claude() {
 	run_remote_script "Claude Code" "https://claude.ai/install.sh"
 }
 
+install_antigravity_cli() {
+	run_remote_script "Antigravity CLI" "https://antigravity.google/cli/install.sh"
+}
+
+install_grok_cli() {
+	run_remote_script "Grok CLI" "https://x.ai/cli/install.sh"
+}
+
+install_opencode() {
+	run_remote_script "OpenCode" "https://opencode.ai/install"
+}
+
 install_startup_service() {
 	local config_dir="$HOME/.config/linux-setup"
 	local script_path="$config_dir/startup.sh"
@@ -282,7 +294,7 @@ EOF
 		sudo loginctl enable-linger "$user_name" || return 1
 }
 
-install_node_clis() {
+install_agent_harnesses() {
 	local node_apps=(
 		pnpm
 		@openai/codex
@@ -291,9 +303,12 @@ install_node_clis() {
 	local app
 	local status=0
 
-	# Claude Code is an agent harness too; keep it in this group so selecting
-	# agent-harnesses installs the complete set without a separate extra.
+	mkdir -p "$HOME/.local/bin"
+
 	install_claude || status=1
+	install_antigravity_cli || status=1
+	install_grok_cli || status=1
+	install_opencode || status=1
 
 	install_mise || return 1
 	run_quiet "Ensuring Node.js is available" mise use --global node@lts || return 1
@@ -301,6 +316,9 @@ install_node_clis() {
 	for app in "${node_apps[@]}"; do
 		run_quiet "Installing $app" mise exec node@lts -- npm install --global "$app" || status=1
 	done
+	run_quiet "Installing Pi" \
+		mise exec node@lts -- npm install --global --ignore-scripts \
+		@earendil-works/pi-coding-agent || status=1
 	return "$status"
 }
 
@@ -530,7 +548,7 @@ install_extras() {
 				try_install "Ollama" install_ollama
 				;;
 			agent-harnesses)
-				try_install "Agent harnesses" install_node_clis
+				try_install "Agent harnesses" install_agent_harnesses
 				;;
 			yeet)
 				try_install "yeet" install_yeet

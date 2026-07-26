@@ -367,6 +367,7 @@ GNOME: log out and back in if Shell extension changes are not visible yet."
 main() {
 	local mode_arg=""
 	local update_configs_arg=""
+	local update_configs_arg_set=0
 	local tier_arg=""
 	local config_arg=""
 	local full_name_arg=""
@@ -446,6 +447,7 @@ main() {
 				;;
 			*)
 				if [ "$mode_arg" = "update-config" ]; then
+					update_configs_arg_set=1
 					if [ -n "$update_configs_arg" ]; then
 						update_configs_arg="$update_configs_arg,$1"
 					else
@@ -525,7 +527,9 @@ main() {
 
 		show_update_config_preflight "$update_configs"
 
-		if has_interactive_tty && ! ui_confirm_run; then
+		if [ "$update_configs_arg_set" -eq 0 ] &&
+			has_interactive_tty &&
+			! ui_confirm_run; then
 			log_warn "Config update cancelled."
 			return 0
 		fi

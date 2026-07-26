@@ -20,6 +20,7 @@ jobs:
       - name: Test config updates
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py'
+          bash tests/agent-harnesses.sh
           bash tests/config-update.sh
           bash tests/gnome-config.sh
           bash tests/launcher.sh
