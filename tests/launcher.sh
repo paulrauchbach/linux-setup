@@ -43,7 +43,13 @@ mkdir -p "$TEST_HOME"
 # shellcheck disable=SC2016
 printf '#!/usr/bin/env bash\nprintf "new:%%s\\n" "$1"\n' >"$SOURCE/setup.sh"
 git -C "$SOURCE" add setup.sh
-git -C "$SOURCE" commit --quiet -m update
+git -C "$SOURCE" commit --quiet -m intermediate-update
+# Advance twice so a depth-one fetch cannot connect the installed shallow tip
+# to the new remote tip through the commit graph.
+printf '# final update\n' >>"$SOURCE/setup.sh"
+printf '# refreshed launcher\n' >>"$SOURCE/linux-setup"
+git -C "$SOURCE" add linux-setup setup.sh
+git -C "$SOURCE" commit --quiet -m final-update
 git -C "$SOURCE" push --quiet
 
 output="$(
@@ -56,6 +62,12 @@ case "$output" in
 	*"new:agents"*) ;;
 	*) fail "launcher did not execute the refreshed setup.sh" ;;
 esac
+
+grep -q '^# refreshed launcher$' "$TEST_HOME/.local/bin/linux-setup" ||
+	fail "launcher did not refresh its installed executable"
+
+[ "$(git -C "$INSTALL_DIR" rev-parse HEAD)" = "$(git -C "$SOURCE" rev-parse HEAD)" ] ||
+	fail "managed checkout did not move to the remote snapshot"
 
 printf 'local change\n' >>"$INSTALL_DIR/setup.sh"
 if HOME="$TEST_HOME" LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" \

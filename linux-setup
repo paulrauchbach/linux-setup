@@ -11,6 +11,7 @@ die() {
 
 INSTALL_DIR="${LINUX_SETUP_INSTALL_DIR:-$HOME/.local/share/linux-setup}"
 REPO_REF="${LINUX_SETUP_REPO_REF:-main}"
+LINUX_SETUP_LAUNCHER_API=1
 
 [ -d "$INSTALL_DIR/.git" ] ||
 	die "$INSTALL_DIR is not a Git checkout. Run install.sh to install or repair linux-setup."
@@ -23,15 +24,19 @@ fi
 printf '\nLinux Setup\n\n'
 printf '==> Refreshing linux-setup\n'
 
-git -C "$INSTALL_DIR" fetch --quiet origin "$REPO_REF"
+git -C "$INSTALL_DIR" fetch --quiet --depth=1 origin "$REPO_REF"
 
-if git -C "$INSTALL_DIR" show-ref --verify --quiet "refs/heads/$REPO_REF"; then
-	git -C "$INSTALL_DIR" checkout --quiet "$REPO_REF"
-else
-	git -C "$INSTALL_DIR" checkout --quiet -b "$REPO_REF"
+# This is a managed installation, not a development checkout. Keep it on the
+# exact requested remote snapshot so updates do not depend on shallow branch
+# ancestry (which disappears as soon as the remote advances more than once).
+git -C "$INSTALL_DIR" checkout --quiet --detach -f FETCH_HEAD
+
+# Keep the command itself in sync with the checkout it updates. The API marker
+# prevents this repaired launcher from downgrading itself while the remote still
+# contains the branch-merging implementation that it is replacing.
+if grep -q '^LINUX_SETUP_LAUNCHER_API=1$' "$INSTALL_DIR/linux-setup"; then
+	mkdir -p "$HOME/.local/bin"
+	install -m 0755 "$INSTALL_DIR/linux-setup" "$HOME/.local/bin/linux-setup"
 fi
-
-git -C "$INSTALL_DIR" merge --quiet --ff-only FETCH_HEAD ||
-	die "the local $REPO_REF branch cannot be fast-forwarded to origin/$REPO_REF."
 
 exec env LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" bash "$INSTALL_DIR/setup.sh" "$@"
