@@ -34,13 +34,23 @@ merge_json_preferences() {
 	run_quiet "Updating $target_preferences" mv "$merged" "$target_preferences"
 }
 
-remove_legacy_brave_policy() {
+apply_brave_policy() {
+	local source_policy="$LINUX_SETUP_COMPONENT_DIR/policies.json"
 	local target_policy="/etc/brave/policies/managed/linux-setup.json"
+	local target_dir
 
-	[ -e "$target_policy" ] || return 0
+	[ -f "$source_policy" ] || die "Brave policy not found at $source_policy."
+	jq -e . "$source_policy" >/dev/null ||
+		die "Invalid Brave policy in $source_policy."
+	if [ -f "$target_policy" ] && cmp -s "$source_policy" "$target_policy"; then
+		log_success "$target_policy is already up to date"
+		return 0
+	fi
 
 	require_sudo
-	run_quiet "Removing legacy Brave managed policy" sudo rm -f "$target_policy"
+	target_dir="$(dirname "$target_policy")"
+	run_quiet "Creating $target_dir" sudo mkdir -p "$target_dir"
+	run_quiet "Updating $target_policy" sudo install -m 0644 "$source_policy" "$target_policy"
 }
 
 apply_brave_preferences() {
@@ -81,7 +91,7 @@ apply_brave_preferences() {
 	sed "s|__USER_NAME__|$user_name|g" "$source_preferences" >"$rendered"
 	merge_json_preferences "$rendered" "$target_preferences"
 	rm -f "$rendered"
-	remove_legacy_brave_policy
+	apply_brave_policy
 }
 
 apply_brave_desktop_integration() {
@@ -114,6 +124,11 @@ apply_brave_desktop_integration() {
 		rendered="$(mktemp)"
 		awk -v wm_class="$wm_class" '
 			BEGIN { in_entry = 0; inserted = 0 }
+			/^Exec=/ && !/--hide-crash-restore-bubble/ {
+				if (!sub(/ %[fFuUdDnNickvm]/, " --hide-crash-restore-bubble&")) {
+					$0 = $0 " --hide-crash-restore-bubble"
+				}
+			}
 			/^\[Desktop Entry\]$/ { in_entry = 1 }
 			in_entry && /^StartupWMClass=/ {
 				print "StartupWMClass=" wm_class

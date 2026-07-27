@@ -169,15 +169,16 @@ if its app is not installed):
 - **Brave Origin** — merges `configs/brave/preferences.json` into the active
   profile's `Preferences` file after substituting your username into the download
   directory. Existing profile data and unrelated settings are preserved. The
-  merge restores the last session, disables Sync and Brave's password manager,
+  merge restores the last session and disables Brave's password manager,
   always shows the bookmarks bar, prompts for each download location, and keeps
   Origin's optional surfaces hidden. Brave must be closed while the merge runs.
-  The config update removes the legacy `linux-setup.json` managed policy after a
-  successful merge. It also installs user-local Brave Origin desktop-entry
+  A minimal managed policy prevents Sync from being enabled. The update also
+  installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so
-  GNOME can associate running browser windows with the correct Alt+Tab app, and
-  makes stable Brave Origin the default browser for HTTP/HTTPS links and HTML
-  files.
+  GNOME can associate running browser windows with the correct Alt+Tab app. The
+  overrides suppress the crash-recovery prompt shown after an OS shutdown while
+  retaining session restoration. The update also makes stable Brave Origin the
+  default browser for HTTP/HTTPS links and HTML files.
 - **GNOME tray icons** — enables the packaged AppIndicator/KStatusNotifier
   extension when GNOME Shell is available and places 16px tray icons on the right
   side of the top bar. If icons do not appear immediately, log out and back in,
