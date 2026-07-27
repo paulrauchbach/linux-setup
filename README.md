@@ -172,8 +172,8 @@ if its app is not installed):
   merge restores the last session and disables Brave's password manager,
   always shows the bookmarks bar, prompts for each download location, and keeps
   Origin's optional surfaces hidden. Brave must be closed while the merge runs.
-  A minimal managed policy prevents Sync from being enabled. The update also
-  installs user-local Brave Origin desktop-entry
+  The update removes the legacy `linux-setup.json` managed policy so that Sync
+  remains available. It also installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so
   GNOME can associate running browser windows with the correct Alt+Tab app. The
   overrides suppress the crash-recovery prompt shown after an OS shutdown while
