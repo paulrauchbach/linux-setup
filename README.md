@@ -175,7 +175,11 @@ if its app is not installed):
   always shows the bookmarks bar, prompts for each download location, and keeps
   Origin's optional surfaces hidden. DuckDuckGo is the default search engine in
   both standard and private windows. Brave must be closed while the merge
-  runs.
+  runs. The official KeePassXC-Browser extension is registered through
+  Chromium's Linux external-extension mechanism and is installed or updated
+  from the Chrome Web Store the next time Brave starts. Its native-messaging
+  host is also installed in Origin's profile so the extension can connect to
+  the KeePassXC desktop application.
   The update removes the legacy `linux-setup.json` managed policy so that Sync
   remains available. It also installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so
@@ -199,8 +203,10 @@ if its app is not installed):
   are reported for installation through Extension Manager.
 
 Direct profile preferences do not force-install extensions or manage site-search
-engines. Install and pin uBlock Origin through Brave itself, and configure any
-site-search engines in `brave://settings/searchEngines`.
+engines. KeePassXC-Browser is therefore registered using Chromium's system-wide
+external-extension descriptor without making Brave a managed browser. Install
+and pin uBlock Origin through Brave itself, and configure any site-search engines
+in `brave://settings/searchEngines`.
 
 ### Agent config
 

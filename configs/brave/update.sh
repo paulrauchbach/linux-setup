@@ -45,6 +45,44 @@ remove_legacy_brave_policy() {
 	run_quiet "Removing legacy Brave managed policy" sudo rm -f "$target_policy"
 }
 
+install_brave_extensions() {
+	local extension_id="oboonakemofpalcgghocfoadofidjkkk"
+	local source_extension="$LINUX_SETUP_COMPONENT_DIR/extensions/$extension_id.json"
+	local target_extension="/usr/share/chromium/extensions/$extension_id.json"
+
+	if ! command -v brave-origin-stable >/dev/null 2>&1 &&
+		! command -v brave-origin-beta >/dev/null 2>&1 &&
+		! { command -v dpkg >/dev/null 2>&1 && dpkg -s brave-origin >/dev/null 2>&1; }; then
+		return 0
+	fi
+
+	[ -f "$source_extension" ] || die "Brave extension descriptor not found at $source_extension."
+	if [ -f "$target_extension" ] && cmp -s "$source_extension" "$target_extension"; then
+		log_success "KeePassXC-Browser is already registered with Brave Origin"
+		return 0
+	fi
+
+	require_sudo
+	run_quiet "Registering KeePassXC-Browser with Brave Origin" \
+		sudo install -D -m 0644 "$source_extension" "$target_extension"
+}
+
+install_keepassxc_native_messaging_host() {
+	local source_host="$LINUX_SETUP_COMPONENT_DIR/native-messaging-hosts/org.keepassxc.keepassxc_browser.json"
+	local target_host="$HOME/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/org.keepassxc.keepassxc_browser.json"
+	local keepassxc_proxy
+	local rendered
+
+	keepassxc_proxy="$(command -v keepassxc-proxy 2>/dev/null || true)"
+	[ -n "$keepassxc_proxy" ] || return 0
+	[ -f "$source_host" ] || die "KeePassXC native-messaging host not found at $source_host."
+
+	rendered="$(mktemp)"
+	sed "s|__KEEPASSXC_PROXY__|$keepassxc_proxy|g" "$source_host" >"$rendered"
+	install_config_file "$rendered" "$target_host"
+	rm -f "$rendered"
+}
+
 apply_brave_preferences() {
 	local source_preferences="$LINUX_SETUP_COMPONENT_DIR/preferences.json"
 	local user_data_dir="$HOME/.config/BraveSoftware/Brave-Origin"
@@ -179,6 +217,8 @@ set_brave_as_default_browser() {
 
 update_config() {
 	apply_brave_preferences
+	install_brave_extensions
+	install_keepassxc_native_messaging_host
 	apply_brave_desktop_integration
 	set_brave_as_default_browser
 }

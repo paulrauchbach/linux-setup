@@ -126,6 +126,8 @@ if find "$REPO_ROOT/configs" -mindepth 1 -maxdepth 1 -type f -print -quit | grep
 fi
 
 brave_preferences="$REPO_ROOT/configs/brave/preferences.json"
+keepassxc_extension="$REPO_ROOT/configs/brave/extensions/oboonakemofpalcgghocfoadofidjkkk.json"
+keepassxc_native_host="$REPO_ROOT/configs/brave/native-messaging-hosts/org.keepassxc.keepassxc_browser.json"
 assert_equal \
 	"DuckDuckGo" \
 	"$(jq -r '.default_search_provider_data.template_url_data.short_name' "$brave_preferences")"
@@ -135,6 +137,15 @@ assert_equal \
 assert_equal \
 	"$(jq -r '.default_search_provider_data.template_url_data.synced_guid' "$brave_preferences")" \
 	"$(jq -r '.brave.default_private_search_provider_guid' "$brave_preferences")"
+assert_equal \
+	"https://clients2.google.com/service/update2/crx" \
+	"$(jq -r '.external_update_url' "$keepassxc_extension")"
+assert_equal \
+	"org.keepassxc.keepassxc_browser" \
+	"$(jq -r '.name' "$keepassxc_native_host")"
+jq -e \
+	'.allowed_origins | index("chrome-extension://oboonakemofpalcgghocfoadofidjkkk/") != null' \
+	"$keepassxc_native_host" >/dev/null || fail "KeePassXC native host does not allow the Chrome extension"
 
 while IFS= read -r component_dir; do
 	component="$(basename "$component_dir")"
