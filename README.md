@@ -13,14 +13,16 @@ Run the bootstrap with no arguments for an interactive run:
 curl -fsSL https://raw.githubusercontent.com/paulrauchbach/linux-setup/main/install.sh | bash
 ```
 
-The bootstrap installs `ca-certificates`, `curl`, and `git`, clones the
+The bootstrap installs missing bootstrap tools, clones the
 repository to `~/.local/share/linux-setup`, installs the `linux-setup` launcher
 in `~/.local/bin`, and forwards every argument to `setup.sh`. Re-running the
-bootstrap updates or repairs the installation.
+bootstrap skips package preparation and checkout writes when they are already
+current.
 
-The launcher refreshes the existing checkout as the current user, then executes
-the newly fetched `setup.sh`. It does not prepare packages or request sudo;
-individual setup operations request elevated access only when they need it:
+The launcher checks the existing checkout as the current user, updates it only
+when the remote commit differs, then executes `setup.sh`. It does not prepare
+packages or request sudo; individual setup operations request elevated access
+only when they need it:
 
 ```bash
 linux-setup

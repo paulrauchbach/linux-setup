@@ -22,21 +22,29 @@ if ! git -C "$INSTALL_DIR" diff --quiet ||
 fi
 
 printf '\nLinux Setup\n\n'
-printf '==> Refreshing linux-setup\n'
+
+local_commit="$(git -C "$INSTALL_DIR" rev-parse HEAD)"
+printf '==> Checking for linux-setup updates\n'
 
 git -C "$INSTALL_DIR" fetch --quiet --depth=1 origin "$REPO_REF"
 
-# This is a managed installation, not a development checkout. Keep it on the
-# exact requested remote snapshot so updates do not depend on shallow branch
-# ancestry (which disappears as soon as the remote advances more than once).
-git -C "$INSTALL_DIR" checkout --quiet --detach -f FETCH_HEAD
+remote_commit="$(git -C "$INSTALL_DIR" rev-parse FETCH_HEAD^{commit})"
 
-# Keep the command itself in sync with the checkout it updates. The API marker
-# prevents this repaired launcher from downgrading itself while the remote still
-# contains the branch-merging implementation that it is replacing.
-if grep -q '^LINUX_SETUP_LAUNCHER_API=1$' "$INSTALL_DIR/linux-setup"; then
-	mkdir -p "$HOME/.local/bin"
-	install -m 0755 "$INSTALL_DIR/linux-setup" "$HOME/.local/bin/linux-setup"
+if [ "$local_commit" != "$remote_commit" ]; then
+	printf '==> Updating linux-setup\n'
+
+	# This is a managed installation, not a development checkout. Keep it on the
+	# exact requested remote snapshot so updates do not depend on shallow branch
+	# ancestry (which disappears as soon as the remote advances more than once).
+	git -C "$INSTALL_DIR" checkout --quiet --detach -f FETCH_HEAD
+
+	# Keep the command itself in sync with the checkout it updates. The API marker
+	# prevents this repaired launcher from downgrading itself while the remote still
+	# contains the branch-merging implementation that it is replacing.
+	if grep -q '^LINUX_SETUP_LAUNCHER_API=1$' "$INSTALL_DIR/linux-setup"; then
+		mkdir -p "$HOME/.local/bin"
+		install -m 0755 "$INSTALL_DIR/linux-setup" "$HOME/.local/bin/linux-setup"
+	fi
 fi
 
 exec env LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" bash "$INSTALL_DIR/setup.sh" "$@"

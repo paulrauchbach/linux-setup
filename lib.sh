@@ -162,6 +162,7 @@ apt_update() {
 apt_install() {
 	local available=()
 	local missing=()
+	local unavailable=()
 	local package
 
 	if ! is_supported_platform; then
@@ -169,13 +170,23 @@ apt_install() {
 		return 0
 	fi
 
+	for package in "$@"; do
+		if dpkg-query -W -f='${db:Status-Abbrev}' "$package" 2>/dev/null | grep -q '^ii '; then
+			continue
+		fi
+
+		missing+=("$package")
+	done
+
+	[ "${#missing[@]}" -gt 0 ] || return 0
+
 	apt_update || return 1
 
-	for package in "$@"; do
+	for package in "${missing[@]}"; do
 		if apt-cache show "$package" >/dev/null 2>&1; then
 			available+=("$package")
 		else
-			missing+=("$package")
+			unavailable+=("$package")
 		fi
 	done
 
@@ -183,8 +194,8 @@ apt_install() {
 		run_quiet "Installing packages: ${available[*]}" sudo apt-get install -y -qq "${available[@]}" || return 1
 	fi
 
-	if [ "${#missing[@]}" -gt 0 ]; then
-		log_warn "Packages unavailable from configured apt sources: ${missing[*]}"
+	if [ "${#unavailable[@]}" -gt 0 ]; then
+		log_warn "Packages unavailable from configured apt sources: ${unavailable[*]}"
 	fi
 
 	return 0

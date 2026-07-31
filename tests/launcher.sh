@@ -69,10 +69,21 @@ grep -q '^# refreshed launcher$' "$TEST_HOME/.local/bin/linux-setup" ||
 [ "$(git -C "$INSTALL_DIR" rev-parse HEAD)" = "$(git -C "$SOURCE" rev-parse HEAD)" ] ||
 	fail "managed checkout did not move to the remote snapshot"
 
+# An unchanged remote must not rewrite the checkout or installed launcher.
+checkout_mtime="$(stat -c %Y "$INSTALL_DIR/setup.sh")"
+launcher_mtime="$(stat -c %Y "$TEST_HOME/.local/bin/linux-setup")"
+sleep 1
+HOME="$TEST_HOME" LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" \
+	bash "$INSTALL_DIR/linux-setup" agents >/dev/null
+[ "$(stat -c %Y "$INSTALL_DIR/setup.sh")" = "$checkout_mtime" ] ||
+	fail "launcher rewrote an unchanged checkout"
+[ "$(stat -c %Y "$TEST_HOME/.local/bin/linux-setup")" = "$launcher_mtime" ] ||
+	fail "launcher reinstalled itself without a new commit"
+
 printf 'local change\n' >>"$INSTALL_DIR/setup.sh"
 if HOME="$TEST_HOME" LINUX_SETUP_INSTALL_DIR="$INSTALL_DIR" \
 	bash "$INSTALL_DIR/linux-setup" agents >/dev/null 2>&1; then
 	fail "launcher accepted a checkout with local changes"
 fi
 
-printf 'PASS: launcher refreshes before execution and preserves local changes\n'
+printf 'PASS: launcher updates only for new commits and preserves local changes\n'
