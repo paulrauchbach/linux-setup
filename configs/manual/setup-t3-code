@@ -58,7 +58,7 @@ done
 [ "$EUID" -ne 0 ] || die "Do not run this script as root."
 [ -d "$T3_CODE_REPO/.git" ] || die "T3_CODE_REPO is not a git checkout: $T3_CODE_REPO"
 [ -f "$MANUAL_DIR/t3-code" ] || die "Missing wrapper template: $MANUAL_DIR/t3-code"
-[ -f "$MANUAL_DIR/t3-code.desktop" ] || die "Missing desktop template: $MANUAL_DIR/t3-code.desktop"
+[ -f "$MANUAL_DIR/t3code.desktop" ] || die "Missing desktop template: $MANUAL_DIR/t3code.desktop"
 
 command -v pnpm >/dev/null 2>&1 || die "pnpm is required. Enable it with corepack or install pnpm first."
 
@@ -104,8 +104,11 @@ install -m 0755 "$MANUAL_DIR/t3-code" "$BIN_DIR/t3-code"
 
 log_step "Installing desktop entry"
 desktop_tmp="$(mktemp)"
-sed "s|/home/paul|$HOME|g" "$MANUAL_DIR/t3-code.desktop" >"$desktop_tmp"
-install -m 0644 "$desktop_tmp" "$DESKTOP_DIR/t3-code.desktop"
+sed "s|/home/paul|$HOME|g" "$MANUAL_DIR/t3code.desktop" >"$desktop_tmp"
+install -m 0644 "$desktop_tmp" "$DESKTOP_DIR/t3code.desktop"
+if [ -f "$DESKTOP_DIR/t3-code.desktop" ]; then
+	rm "$DESKTOP_DIR/t3-code.desktop"
+fi
 rm -f "$desktop_tmp"
 
 if command -v update-desktop-database >/dev/null 2>&1; then
@@ -114,4 +117,4 @@ fi
 
 printf '\nT3 Code is ready.\n'
 printf 'Wrapper: %s\n' "$BIN_DIR/t3-code"
-printf 'Desktop entry: %s\n' "$DESKTOP_DIR/t3-code.desktop"
+printf 'Desktop entry: %s\n' "$DESKTOP_DIR/t3code.desktop"

@@ -6,4 +6,4 @@ TryExec=/home/paul/.local/bin/t3-code
 Icon=/home/paul/Applications/t3-code-icon.png
 Terminal=false
 Categories=Utility;
-StartupWMClass=t3 code (alpha)
+StartupWMClass=t3code
