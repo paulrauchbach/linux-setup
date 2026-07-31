@@ -15,5 +15,5 @@ exec /usr/bin/zsh -lic 'exec "$@"' t3-code "$appimage" "$@"
 
 # this has to go in .zshrc in the very beginning, otherwise it won't work
 # if [[ -n "${APPIMAGE:-}" && "$APPIMAGE" == *T3-Code* ]]; then
-#  echo $APPIMAGE $APPDIR $ARGV0 $ELECTRON_RUN_AS_NODE
+#  unset APPIMAGE APPDIR ARGV0 ELECTRON_RUN_AS_NODE
 #fi
