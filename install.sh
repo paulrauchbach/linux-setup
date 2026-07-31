@@ -41,7 +41,7 @@ if [ -d "$INSTALL_DIR/.git" ]; then
 	local_commit="$(git -C "$INSTALL_DIR" rev-parse HEAD)"
 	printf '\n==> Checking for linux-setup updates\n'
 	git -C "$INSTALL_DIR" fetch --quiet --depth=1 origin "$REPO_REF"
-	remote_commit="$(git -C "$INSTALL_DIR" rev-parse FETCH_HEAD^{commit})"
+	remote_commit="$(git -C "$INSTALL_DIR" rev-parse 'FETCH_HEAD^{commit}')"
 	if [ "$local_commit" != "$remote_commit" ]; then
 		printf '==> Updating linux-setup\n'
 		git -C "$INSTALL_DIR" checkout --quiet --detach -f FETCH_HEAD
