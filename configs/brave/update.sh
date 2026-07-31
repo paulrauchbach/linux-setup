@@ -13,7 +13,9 @@ merge_json_preferences() {
 	merged="$(mktemp "$target_dir/.linux-setup-preferences.XXXXXX")"
 
 	if [ -f "$target_preferences" ]; then
-		jq -c -s '.[0] * .[1]' "$target_preferences" "$source_preferences" >"$merged" || {
+		jq -c -s '
+			(.[0] | del(.default_search_provider_data.mirrored_template_url_data)) * .[1]
+		' "$target_preferences" "$source_preferences" >"$merged" || {
 			rm -f "$merged"
 			die "Could not merge preferences into $target_preferences."
 		}

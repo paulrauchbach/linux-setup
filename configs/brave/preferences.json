@@ -18,6 +18,22 @@
   "browser": {
     "enable_spellchecking": true
   },
+  "default_search_provider_data": {
+    "template_url_data": {
+      "alternate_urls": [],
+      "favicon_url": "https://duckduckgo.com/favicon.ico",
+      "input_encodings": [
+        "UTF-8"
+      ],
+      "keyword": ":d",
+      "prepopulate_id": 515,
+      "safe_for_autoreplace": true,
+      "short_name": "DuckDuckGo",
+      "suggestions_url": "https://ac.duckduckgo.com/ac/?q={searchTerms}&type=list",
+      "synced_guid": "485bf7d3-0215-45af-87dc-538868000515",
+      "url": "https://duckduckgo.com/?q={searchTerms}&t=bravened"
+    }
+  },
   "spellcheck": {
     "dictionaries": [
       "de",
@@ -32,6 +48,21 @@
     "show_on_all_tabs": true
   },
   "brave": {
+    "default_private_search_provider_data": {
+      "alternate_urls": [],
+      "favicon_url": "https://duckduckgo.com/favicon.ico",
+      "input_encodings": [
+        "UTF-8"
+      ],
+      "keyword": ":d",
+      "prepopulate_id": 515,
+      "safe_for_autoreplace": true,
+      "short_name": "DuckDuckGo",
+      "suggestions_url": "https://ac.duckduckgo.com/ac/?q={searchTerms}&type=list",
+      "synced_guid": "485bf7d3-0215-45af-87dc-538868000515",
+      "url": "https://duckduckgo.com/?q={searchTerms}&t=bravened"
+    },
+    "default_private_search_provider_guid": "485bf7d3-0215-45af-87dc-538868000515",
     "global_privacy_control_enabled": true,
     "show_screenshot_button": false,
     "web_discovery_enabled": false,

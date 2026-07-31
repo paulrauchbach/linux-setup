@@ -125,6 +125,17 @@ if find "$REPO_ROOT/configs" -mindepth 1 -maxdepth 1 -type f -print -quit | grep
 	fail "configs contains a top-level file instead of a component directory"
 fi
 
+brave_preferences="$REPO_ROOT/configs/brave/preferences.json"
+assert_equal \
+	"DuckDuckGo" \
+	"$(jq -r '.default_search_provider_data.template_url_data.short_name' "$brave_preferences")"
+assert_equal \
+	"DuckDuckGo" \
+	"$(jq -r '.brave.default_private_search_provider_data.short_name' "$brave_preferences")"
+assert_equal \
+	"$(jq -r '.default_search_provider_data.template_url_data.synced_guid' "$brave_preferences")" \
+	"$(jq -r '.brave.default_private_search_provider_guid' "$brave_preferences")"
+
 while IFS= read -r component_dir; do
 	component="$(basename "$component_dir")"
 	[ "$component" = "manual" ] && continue

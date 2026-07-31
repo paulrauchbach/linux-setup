@@ -173,7 +173,9 @@ if its app is not installed):
   directory. Existing profile data and unrelated settings are preserved. The
   merge restores the last session and disables Brave's password manager,
   always shows the bookmarks bar, prompts for each download location, and keeps
-  Origin's optional surfaces hidden. Brave must be closed while the merge runs.
+  Origin's optional surfaces hidden. DuckDuckGo is the default search engine in
+  both standard and private windows. Brave must be closed while the merge
+  runs.
   The update removes the legacy `linux-setup.json` managed policy so that Sync
   remains available. It also installs user-local Brave Origin desktop-entry
   overrides with `StartupWMClass` values that match Brave's X11 window class, so
@@ -196,9 +198,9 @@ if its app is not installed):
   supported Shell extensions already installed. Missing optional extensions
   are reported for installation through Extension Manager.
 
-Direct profile preferences do not force-install extensions or manage search
-engines. Install and pin uBlock Origin through Brave itself, and configure the
-default and site-search engines in `brave://settings/searchEngines`.
+Direct profile preferences do not force-install extensions or manage site-search
+engines. Install and pin uBlock Origin through Brave itself, and configure any
+site-search engines in `brave://settings/searchEngines`.
 
 ### Agent config
 
