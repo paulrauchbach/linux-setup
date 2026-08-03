@@ -2,7 +2,6 @@
 
 ## Quick Obligations
 
-- Tool or command hangs: if it runs longer than 5 minutes, stop it, capture logs, and check with the user.
 - Adding a dependency: research well-maintained options and confirm fit with the user before adding.
 
 ## Mindset & Process
