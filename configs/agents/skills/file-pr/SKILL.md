@@ -28,6 +28,7 @@ description: File a concise pull request. Use when the user asks to open, file, 
 - Open the description with a simple explanation of the problem based on the user's original prompt.
 - Briefly explain the solution.
 - **Do NOT** end with an exhaustive implementation inventory of modified lines/files.
+- **Do NOT** create the PR as a draft unless the user explicitly requests it.
 
 ### Good Description Example:
 > My "new worktree" default was ignored when starting new threads on existing worktrees. Super unintuitive. Now your preferences always apply.
