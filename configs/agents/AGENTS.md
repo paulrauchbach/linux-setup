@@ -1,53 +1,60 @@
-# Codex CLI Agent Profile
+I'm Paul. You're my agent. We will be working together a lot, so I thought it would be worth introducing myself.
+I am a native german, though fluent in english. Still aim to provide your answers as simple and clear as possible. Im law, as well as cs educated. I'm not a trained software engineer. I've taught software development  myself. I've never worked somewhere where I had to write code. Thus I'n unfamiliar with most 'developer slang'.
+I love to build. I focus on building complex things as simple as possible. I love to find ways to reduce complexity when solving problems.
+I wanted to share some of my preferences here so we can be more aligned as we work together.
 
-## Quick Obligations
+# Core Philosophy & Instruction Hierarchy
 
-- Adding a dependency: research well-maintained options and confirm fit with the user before adding.
+- Treat these instructions as solid, high-yield defaults. User instructions in active prompts override both global defaults and repository configs.
+- Keep things simple. Channel "YAGNI" (You Aren't Gonna Need It) energy unless explicitly directed otherwise. Do not over-engineer or add premature abstractions.
 
-## Mindset & Process
+# General Coding & TypeScript Rules
 
-- Instead of applying a bandaid, fix things from first principles. Find the source, solve the real problem, and do not stack a cheap patch on top of a broken design just because it is faster today.
-- For nontrivial work, ground the outcome in architecture, official sources when they matter, and the current codebase. A useful default shape is:
-  1. Think about the architecture.
-  2. Research official docs, blogs, or papers on the best architecture.
-  3. Review the existing codebase.
-  4. Compare the research with the codebase to choose the best fit.
-  5. Implement the fix or ask about the tradeoffs the user is willing to make.
-- Write idiomatic, simple, maintainable code with readable, nice APIs. Prefer clarity and a clean interface over cleverness or unnecessary complexity. Always ask yourself if this is the most simple intuitive solution to the problem.
-- Clean up unused code ruthlessly. If a function no longer needs a parameter or a helper is dead, delete it and update the callers instead of letting the junk linger.
-- **Search before pivoting.** If you are stuck or uncertain, do a quick web search for official docs or specs, then continue with the current approach. Do not change direction unless asked.
+- Typesafety is essential, take full advantage of TypeScript.
+- Do not write loose or lazy TypeScript that looks like Python rewritten in JS syntax.
+- Avoid `any` unless there is no reasonably typed alternative or the user explicitly requests it.
+- Avoid one-line functions or helper wrappers that exist solely to force-cast types.
+- Write clean, expressive TypeScript in ways that Matt Pocock would be proud of.
+- Don't be scared to propose bold architectural or code simplify ideas if they can meaningfully benefit our work.
 
-## Testing Philosophy
+# Preferred Technology Stack
 
-- Avoid mock tests; do unit or e2e instead. Mocks are lies: they invent behaviors that never happen in production and hide the real bugs that do.
-- Test everything with rigor. Our intent is ensuring a new person contributing to the same code base cannot break our stuff and that nothing slips by. We love rigour.
+If tech choices are not already specified in the repository context, prefer:
 
-## Language Guidance
+- Zustand, TanStack Query for state management
+- Next.js or React as frameworks
+- Zod for schema validation
+- mise for tool-versioning
+- pnpm as a package manager
+- monorepos, setup turbo
+- local-first solutions which can be self-hosted
 
-### TypeScript
+# Commands, Verification & Package Management
 
-- Do not use `any`; we are better than that.
-- Using `as` is bad, use the types given everywhere and model the real shapes.
-- If the app is for a browser, assume we use all modern browsers unless otherwise specified; we do not need most polyfills.
+- Do not start long-running dev servers by default. Assume the user may already have one running unless the task specifically requires it.
+- Always prefer quick, targeted verification scripts (e.g., `typecheck`, `lint`, or focused unit tests) over full builds.
+- Run full production builds only when necessary to verify changes, when requested by the user, or when no cheaper reliable check exists.
 
-### React & Frontend
+# Question Handling: "Questions Are Read-Only"
 
-- For React work, follow current React best practices. If you are unsure or the codebase is doing something weird, research the current official docs and the repo's existing patterns before changing things instead of guessing or cargo-culting stale advice.
-- Keep components small, focused, and reusable. Prefer reusable components, hooks, and helpers in their own files instead of giant multi-purpose components or mega files.
-- Prefer composition and clear data flow over prop soup, duplicated state, and clever abstractions that nobody wants to debug later.
-- Reuse the repo's existing design system, primitives, and styling patterns first. If there is no design system yet, build one from shared tokens and reusable primitives, and prefer mature accessible building blocks over reinventing common widgets from scratch.
+- A question is a request for an answer and analysis—**not** for code or state changes.
 
-### Playwright & Electron E2E
+# Task Ceremony & Sub-Agent Orchestration
 
-- Playwright test plumbing should use typed fixtures and app-side test facets over ad hoc helpers that smuggle state through globals. If that path is not obvious, read the official Playwright fixture docs and the repo's existing fixture setup before adding new machinery.
-- Do not stuff JavaScript objects or event logs onto `window` to route state between the app and Playwright. Treat that as a design smell. Test code runs in the Playwright/Node environment, `page.evaluate` runs in the page or renderer environment, and Electron main-process state is somewhere else entirely.
-- Assert the user-visible app behavior or durable application state that the action should produce. Do not add broad internal event tracking just to prove a click fired, unless the event itself is the product contract.
-- If a test must observe an internal event, keep the listener scoped to the single assertion or fixture lifetime. Avoid long-lived global tracking state that survives across windows, projects, or tests.
-- For native menus and Electron shell flows, use the real existing UI or an app-side fixture/facet that activates the existing menu item. Do not dynamically create menu items or other UI during tests.
-- Keep platform-specific branching in the application or main-process helper that owns the behavior when possible. Playwright specs should ask the app for the right action and assert the result, not duplicate OS logic.
-- Keep the diff small. Reuse the original helper when behavior is the same, collapse duplicate code, and inline trivial shape checks instead of creating tiny one-off abstractions that make the test harder to read.
+- Keep overhead proportional to problem complexity.
+- Do NOT spawn sub-agents or multi-agent panels for work a single agent can finish in one pass.
+- Sub-agent delegation is reserved for parallel breadth exploration or adversarial review, not standard single-threaded tasks.
+- When multiple agents run concurrently, state explicit file/directory ownership up front so sub-agents do not collide on the same files.
 
-## Environment & Setup
+# Visual & UI Design Rules
 
-- Most tools on this local system are managed through `mise`; `mise` is the preferred way of managing tools.
-- Always use `pnpm`.
+- Keep orchestration logic pure and UI components dumb and focused.
+- Prototype or stand up UI in isolated preview states or minimal contrasts first; do not break production components.
+- Ensure components adapt fluidly to containers and screens. Avoid hardcoded static pixel heights/widths or excessive nested card abstractions.
+
+# Pull Request & Git Workflow
+
+- Before creating a PR, check whether a PR for the current branch already exists.
+- Review local diffs against `origin/main` to verify all content aligns cleanly with the user's intent.
+- Match PR title conventions (e.g. `feat(...)`, `fix(...)`, `perf(...)`). Write clear descriptions focusing on user value rather than file inventory lists.
+- when asked to review a PR use the babysit-pr skill. This skill defines how the review should be done, i.e. using comments.
