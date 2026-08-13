@@ -1,0 +1,4 @@
+policy:
+  # Keep this skill out of Codex's model-visible implicit skill context.
+  # It remains available for explicit $appimage-integrate invocation.
+  allow_implicit_invocation: false
