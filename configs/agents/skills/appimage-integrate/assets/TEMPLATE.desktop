@@ -1,0 +1,93 @@
+[Desktop Entry]
+
+# Required. For normal GUI applications this should be "Application".
+Type=Application
+
+# Human-readable name shown in GNOME's app launcher/search.
+Name=My App
+
+# Optional description shown by some desktop environments.
+Comment=Short description of the application
+
+# Command used to start the application.
+#
+# IMPORTANT:
+# - Use an absolute path.
+# - Do not use "~" for your home directory.
+# - Quote the executable path if it contains spaces.
+#
+# Examples:
+# Exec=/home/USERNAME/Applications/MyApp.AppImage
+# Exec="/home/USERNAME/Applications/My App.AppImage"
+Exec=/home/USERNAME/Applications/MyApp.AppImage
+
+# Icon shown in the application launcher, dock, etc.
+#
+# Simplest option for AppImages: use an absolute path:
+# Icon=/home/USERNAME/Applications/icons/my-app.png
+#
+# Alternatively, install the icon into your icon theme, e.g.
+# ~/.local/share/icons/hicolor/256x256/apps/my-app.png
+# and then simply use:
+# Icon=my-app
+#
+# Do NOT include the extension when using an icon-theme name.
+Icon=/home/USERNAME/Applications/icons/my-app.png
+
+# Usually false for GUI applications.
+# Set to true only if the program should run inside a terminal.
+Terminal=false
+
+# Application categories.
+# Multiple categories are separated by semicolons and the value should end
+# with a semicolon.
+#
+# Common examples:
+# Utility;
+# Development;
+# Graphics;
+# AudioVideo;
+# Network;
+# Office;
+Categories=Utility;
+
+# Optional but generally sensible for GUI applications.
+StartupNotify=true
+
+# IMPORTANT FOR WINDOW MATCHING / ALT-TAB / DOCK ICONS:
+#
+# X11/XWayland applications expose a WM_CLASS. GNOME can use this value to
+# associate the running window with this .desktop entry.
+#
+# To discover it:
+#
+#   xprop WM_CLASS
+#
+# Then click the application's window.
+#
+# Example output:
+#   WM_CLASS(STRING) = "myapp", "MyApp"
+#
+# Usually the second value is what you put here:
+#
+# StartupWMClass=MyApp
+#
+# If the application works correctly without this, you can omit it.
+StartupWMClass=MyApp
+
+# Optional. Prevents GNOME from showing the application twice in some
+# startup-tracking situations. Normally leave this commented out.
+# StartupWMClass=...
+
+# Optional MIME/file associations.
+#
+# Example:
+# MimeType=application/pdf;image/png;
+#
+# Leave this out unless you actually want the application registered as a
+# handler for those file types.
+# MimeType=
+
+# Optional keywords used by desktop search.
+# Separate them using semicolons.
+Keywords=myapp;example;
