@@ -1,5 +1,33 @@
-model = "gpt-5.5"
-model_reasoning_effort = "xhigh"
+model = "gpt-5.6-sol"
+model_reasoning_effort = "high"
+
+[features]
+# Each false entry disables a feature family that can expose tools or supporting
+# instructions. Re-enable only the capabilities used by your workflow.
+apps = false                 # Connected apps/connectors.
+browser_use = false          # Browser automation.
+computer_use = false         # General computer-control tools.
+image_generation = false     # Raster image generation/editing.
+goals = false                # Durable long-running goal machinery.
+plugins = false              # Plugin discovery and plugin-provided context.
+skill_search = false         # Automatic skill discovery/search.
+tool_suggest = false         # Suggestions for installable connectors/plugins.
+
+# Explicitly disable every MCP server currently available in this setup.
+[mcp_servers.codex_apps]
+enabled = false
+
+[mcp_servers.xcodebuildmcp]
+enabled = false
+
+# Skills are disabled by exact folder path. Repeat this block for an installed
+# skill you do not want advertised/loaded. Relative paths should be avoided in
+# a user-wide config; use the actual absolute skill directory there.
+#
+# [[skills.config]]
+# path = "/absolute/path/to/unneeded-skill"
+# enabled = false
+
 [projects."/home/paul/dev/debian-config"]
 trust_level = "trusted"
 

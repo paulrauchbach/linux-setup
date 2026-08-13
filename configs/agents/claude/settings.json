@@ -1,5 +1,8 @@
 {
   "model": "claude-sonnet-5",
+  "env": {
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
+  },
   "statusLine": {
     "type": "command",
     "command": "bash /home/paul/.claude/statusline-command.sh"
