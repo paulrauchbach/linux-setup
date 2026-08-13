@@ -165,6 +165,10 @@ if its app is not installed):
 - **Alacritty** — installs `configs/alacritty/alacritty.toml` to
   `~/.config/alacritty/alacritty.toml` (JetBrainsMono Nerd Font, padding,
   opacity).
+- **btop** — installs `configs/btop/btop.svg`, a Papirus-theme icon, to
+  `~/.local/share/icons/hicolor/scalable/apps/btop.svg`. This overrides the
+  packaged Debian icon (a flat, low-contrast glyph) for the same `Icon=btop`
+  name without touching apt-owned files.
 - **VS Code** — installs `configs/vscode/settings.json` to
   `~/.config/Code/User/settings.json` and installs every extension listed in
   `configs/vscode/extensions.txt` (edit that file to match your stack).
@@ -249,7 +253,7 @@ older installed shell helpers.
 | Target | Managed configuration |
 | --- | --- |
 | `agents` | Codex and Claude settings, global instructions, and all shared skills |
-| `zsh`, `tmux`, `alacritty`, `vscode`, `brave`, `ulauncher`, `gnome`, `gnome-tray` | The named application or desktop config |
+| `zsh`, `tmux`, `alacritty`, `btop`, `vscode`, `brave`, `ulauncher`, `gnome`, `gnome-tray` | The named application or desktop config |
 | `startup-service` | The systemd user unit, when the extra is already installed |
 | `yeet` | The `yeet` command in `~/.local/bin` |
 | `all` | Every discovered component |
