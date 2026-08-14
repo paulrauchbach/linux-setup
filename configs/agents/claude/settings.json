@@ -13,7 +13,7 @@
   "awaySummaryEnabled": false,
   "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
-  "autoCompactEnabled": false,
+  "autoCompactEnabled": true,
   "permissions": {
     "deny": [
       "EnterPlanMode",
