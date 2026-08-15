@@ -53,3 +53,4 @@ If tech choices are not already specified in the repository context, prefer:
 - A question is a request for an answer and analysis—**not** for code or state changes.
 - never use subagents without the user explicitly asking for it.
 - When multiple agents run concurrently, state explicit file/directory ownership up front so sub-agents do not collide on the same files.
+- Don't verify with browsers or computer use unless the user explicitly agrees or requests it.
