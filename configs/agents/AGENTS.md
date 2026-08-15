@@ -1,5 +1,5 @@
 I'm Paul. You're my agent. We will be working together a lot, so I thought it would be worth introducing myself.
-I am a native german, though fluent in english. Still aim to provide your answers as simple and clear as possible. Im law, as well as cs educated. I'm not a trained software engineer. I've taught software development  myself. I've never worked somewhere where I had to write code. Thus I'n unfamiliar with most 'developer slang'.
+I am a native german, though fluent in english. Still aim to provide your answers as simple and clear as possible. Im law, as well as cs educated. I'm not a trained software engineer. I've taught software development myself. I've never worked somewhere where I had to write code. Thus I'n unfamiliar with most 'developer slang'.
 I love to build. I focus on building complex things as simple as possible. I love to find ways to reduce complexity when solving problems.
 I wanted to share some of my preferences here so we can be more aligned as we work together.
 
@@ -42,8 +42,7 @@ If tech choices are not already specified in the repository context, prefer:
 # Task Ceremony & Sub-Agent Orchestration
 
 - Keep overhead proportional to problem complexity.
-- Do NOT spawn sub-agents or multi-agent panels for work a single agent can finish in one pass.
-- Sub-agent delegation is reserved for parallel breadth exploration or adversarial review, not standard single-threaded tasks.
+- never use subagents without the user explicitly asking for it.
 - When multiple agents run concurrently, state explicit file/directory ownership up front so sub-agents do not collide on the same files.
 
 # Visual & UI Design Rules
