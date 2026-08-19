@@ -1,7 +1,6 @@
 ---
 name: subagent
 description: Run a fused subagent workflow that uses agy for quick read-only research and repository exploration, and Codex for implementation, debugging, tests, refactors, or any task that may change files. Use this skill as the single front door for both lightweight scouting and deeper repo work.
-disable-model-invocation: true
 ---
 
 # AGY + Codex Subagents
