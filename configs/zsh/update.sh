@@ -129,10 +129,10 @@ update_config() {
 # >>> linux-setup managed >>>
 export PATH="$HOME/.local/bin:$PATH"
 
-if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
+if command -v batcat >/dev/null 2>&1; then
   alias bat="batcat"
 fi
-alias cat="bat"
+unalias cat 2>/dev/null || true
 
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
