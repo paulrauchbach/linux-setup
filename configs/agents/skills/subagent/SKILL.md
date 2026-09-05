@@ -15,10 +15,10 @@ Use this skill when you want one subagent entry point that routes to the right t
 
 Use agy as a lightweight scout for finding files, mapping flows, and gathering evidence. It should not implement changes.
 
-Always run agy with its newest available model, `gemini-3.7-flash-high`, and skipped permissions. The CLI expects its lowercase model ID, not its display name:
+Always run agy with its newest available model, `gemini-3.8-flash-high`, and skipped permissions. The CLI expects its lowercase model ID, not its display name:
 
 ```sh
-agy --model gemini-3.7-flash-high --dangerously-skip-permissions --print-timeout 10m --print '
+agy --model gemini-3.8-flash-high --dangerously-skip-permissions --print-timeout 10m --print '
 You are a read-only research subagent.
 
 Task:

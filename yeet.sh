@@ -89,7 +89,7 @@ yeet_cli="${YEET_CLI:-agy}"
 case "$yeet_cli" in
 codex) yeet_model="${YEET_MODEL:-gpt-5.4-mini}" ;;
 claude) yeet_model="${YEET_MODEL:-haiku}" ;;
-agy) yeet_model="${YEET_MODEL:-gemini-3.5-flash-low}" ;;
+agy) yeet_model="${YEET_MODEL:-gemini-3.8-flash-low}" ;;
 *) die "unknown YEET_CLI: $yeet_cli (use codex, claude, or agy)" ;;
 esac
 
