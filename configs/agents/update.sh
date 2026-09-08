@@ -55,4 +55,5 @@ update_config() {
 
 	install_shared_skills_dir "$shared_skills_dir" "$HOME/.codex/skills"
 	install_shared_skills_dir "$shared_skills_dir" "$HOME/.claude/skills"
+	install_shared_skills_dir "$shared_skills_dir" "$HOME/.gemini/config/skills"
 }

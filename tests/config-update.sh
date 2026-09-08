@@ -23,10 +23,10 @@ assert_file_matches() {
 }
 
 assert_skill_link() {
-	local agent="$1"
+	local target_dir="$1"
 	local skill="$2"
 	local expected="$REPO_ROOT/configs/agents/skills/$skill"
-	local actual="$TEST_HOME/.$agent/skills/$skill"
+	local actual="$target_dir/$skill"
 
 	[ -L "$actual" ] || fail "$actual is not a symbolic link"
 	[ "$(readlink "$actual")" = "$expected" ] || fail "$actual points to the wrong source"
@@ -81,8 +81,9 @@ assert_file_matches \
 
 for skill_path in "$REPO_ROOT/configs/agents/skills"/*; do
 	skill="$(basename "$skill_path")"
-	assert_skill_link codex "$skill"
-	assert_skill_link claude "$skill"
+	assert_skill_link "$TEST_HOME/.codex/skills" "$skill"
+	assert_skill_link "$TEST_HOME/.claude/skills" "$skill"
+	assert_skill_link "$TEST_HOME/.gemini/config/skills" "$skill"
 done
 
 [ -f "$TEST_HOME/.codex/skills/unrelated/local.txt" ] || fail "unrelated Codex skill was removed"
